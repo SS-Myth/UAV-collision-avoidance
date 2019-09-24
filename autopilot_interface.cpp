@@ -2262,39 +2262,39 @@ relHdg(double currentHdg, double otherHdg)
 
 void 
 Autopilot_Interface::
-CA_Avoid( aircraftInfo & aircraftA, aircraftInfo & aircraftB, predictedCollision &collision)
+CA_Avoid( aircraftInfo &aircraftA, aircraftInfo &aircraftB, predictedCollision &collision)
 {
-
+	
 	double missDist = 75; //Meters
 	double turnRadius = 50; //Meters
 	double avoidVec[2] = {0};
 	//Stores waypoints in Current_Waypoints
-    Request_Waypoints();
-	 mavlink_mission_item_t headingVector; //FOR TESTING PURPOSES. MUST BE CHANGED LATER ALONG WITH "distanceVectors" FUNCTION
+    	Request_Waypoints();
+	mavlink_mission_item_t headingVector; //FOR TESTING PURPOSES. MUST BE CHANGED LATER ALONG WITH "distanceVectors" FUNCTION
 	
-    //get info for aircraft
-    double latA = aircraftA.lat[0];
-    double lonA = aircraftA.lon[0];
-    uint64_t buffA = aircraftA.safetyBubble;
-    double latB = aircraftB.lat[0];
-    double lonB = aircraftB.lon[0];
-    uint64_t buffB = aircraftB.safetyBubble;
+	//get info for aircraft
+    	double latA = aircraftA.lat[0];
+    	double lonA = aircraftA.lon[0];
+    	uint64_t buffA = aircraftA.safetyBubble;
+    	double latB = aircraftB.lat[0];
+    	double lonB = aircraftB.lon[0];
+    	uint64_t buffB = aircraftB.safetyBubble;
 
 
-	 //Define more variables
-	 double distMag;
-	 double distHdg;
+	//Define more variables
+	double distMag;
+	double distHdg;
 	double addHdg;
-double avdDist;
-double avdHdg;
-//double targetHdg
-//double addHdg
+	double avdDist;
+	double avdHdg;
+	//double targetHdg
+	//double addHdg
 
-     double relativeHdg = relHdg(aircraftA.Hdg[0], aircraftB.Hdg[0]);
-	 addToFile(convertToString(relativeHdg), "Relative Heading");
+     	double relativeHdg = relHdg(aircraftA.Hdg[0], aircraftB.Hdg[0]);
+	addToFile(convertToString(relativeHdg), "Relative Heading");
 
-	 //Avoid if other aircraft is approaching from the side
-    if ( fabs(relativeHdg) > 30.0 && fabs(relativeHdg) < 150.0) {
+	//Avoid if other aircraft is approaching from the side
+    	if ( fabs(relativeHdg) > 30.0 && fabs(relativeHdg) < 150.0) {
 
 		mavlink_mission_item_t distVec = distanceVectors(aircraftB.lat[0], aircraftB.lon[0], aircraftA.lat[0], aircraftA.lon[0]);
     	distMag = sqrt( pow((distVec.x),2) + pow(distVec.y, 2));
