@@ -2030,7 +2030,8 @@ return distVec;
 
 predictedCollision
 Autopilot_Interface::
-CA_Predict(aircraftInfo & aircraftA, aircraftInfo & aircraftB) {
+CA_Predict(aircraftInfo &aircraftA, aircraftInfo &aircraftB) 
+{
 	float fps = 10.0; //fps meaning future points
 	double  rH; // for relative Heading of the planes
 	float t;
@@ -2060,19 +2061,23 @@ CA_Predict(aircraftInfo & aircraftA, aircraftInfo & aircraftB) {
 	// Set up equations of predicted motion for both aircraft
 	//-----------------------------------------------------------------------------
 	
+   	aircraftA.Hdg[0] = atan2(aircraftA.velocityY[0], aircraftA.velocityX[0]) * 180.0/3.1415;
+   	aircraftA.Hdg[1] = atan2(aircraftA.velocityY[1], aircraftA.velocityX[1]) * 180.0/3.1415;
+   	aircraftB.Hdg[0] = atan2(aircraftB.velocityY[0], aircraftB.velocityX[0]) * 180.0/3.1415;
+   	aircraftB.Hdg[1] = atan2(aircraftB.velocityY[1], aircraftB.velocityX[1]) * 180.0/3.1415;
 
-
-   aircraftA.Hdg[0] = atan2(aircraftA.velocityY[0], aircraftA.velocityX[0]) * 180.0/3.1415;
-   aircraftA.Hdg[1] = atan2(aircraftA.velocityY[1], aircraftA.velocityX[1]) * 180.0/3.1415;
-   aircraftB.Hdg[0] = atan2(aircraftB.velocityY[0], aircraftB.velocityX[0]) * 180.0/3.1415;
-   aircraftB.Hdg[1] = atan2(aircraftB.velocityY[1], aircraftB.velocityX[1]) * 180.0/3.1415;
-
-	if (aircraftA.Hdg[0] > aircraftA.Hdg[1]) 					{ accDirA = aircraftA.Hdg[0] + 90.0; }
-	if (aircraftA.Hdg[0] < aircraftA.Hdg[1]) 					{ accDirA = aircraftA.Hdg[0] - 90.0; }
-	if ( fabs(aircraftA.Hdg[0] - aircraftA.Hdg[1]) > 180)  { accDirA = accDirA + 180.0; }
-	if (aircraftB.Hdg[0] > aircraftB.Hdg[1]) 					{ accDirB = aircraftB.Hdg[0] + 90.0; }
-	if (aircraftB.Hdg[0] < aircraftB.Hdg[1]) 					{ accDirB = aircraftB.Hdg[0] - 90.0; }
-	if ( fabs(aircraftB.Hdg[0] - aircraftB.Hdg[1]) > 180)  { accDirB = accDirB + 180.0; }
+	if (aircraftA.Hdg[0] > aircraftA.Hdg[1])
+		accDirA = aircraftA.Hdg[0] + 90.0;
+	if (aircraftA.Hdg[0] < aircraftA.Hdg[1]) 					
+		accDirA = aircraftA.Hdg[0] - 90.0;
+	if ( fabs(aircraftA.Hdg[0] - aircraftA.Hdg[1]) > 180)  
+		accDirA = accDirA + 180.0;
+	if (aircraftB.Hdg[0] > aircraftB.Hdg[1]) 					
+		accDirB = aircraftB.Hdg[0] + 90.0;
+	if (aircraftB.Hdg[0] < aircraftB.Hdg[1]) 					
+		accDirB = aircraftB.Hdg[0] - 90.0;
+	if ( fabs(aircraftB.Hdg[0] - aircraftB.Hdg[1]) > 180)  
+		accDirB = accDirB + 180.0;
 
 	
 	//printf("aircraftA velocityX: %f\n", aircraftA.velocityX[0]);
@@ -2123,8 +2128,10 @@ CA_Predict(aircraftInfo & aircraftA, aircraftInfo & aircraftB) {
 	RmagA = pow(aircraftA.vTan[0], 2) / accNMagA;
 	RmagB = pow(aircraftB.vTan[0], 2) / accNMagB;
 
-	if (fabs(accNMagA) < 0.0001) {RmagA = 0.0;}
-	if (fabs(accNMagB) < 0.0001) {RmagB = 0.0;}
+	if (fabs(accNMagA) < 0.0001) 
+		RmagA = 0.0;
+	if (fabs(accNMagB) < 0.0001) 
+		RmagB = 0.0;
 	//printf("RmagA %f\n", RmagA);
 
 	// Use acceleration vector to find vector from vehicle to center
@@ -2134,24 +2141,29 @@ CA_Predict(aircraftInfo & aircraftA, aircraftInfo & aircraftB) {
 	RvCB[1] = RmagB * accNUnitB[1];
 
 
-	//	printf("RvCA[0] %f\n", RvCA[0]);
-	//	printf("RvCA[1] %f\n", RvCA[1]);
+	//printf("RvCA[0] %f\n", RvCA[0]);
+	//printf("RvCA[1] %f\n", RvCA[1]);
 
 	// Find magnitude of angular rotation (rad/s)
 	omegaA = aircraftA.vTan[0]/RmagA;
 	omegaB = aircraftB.vTan[0]/RmagB;
-	if (fabs(RmagA) < 0.0001) {omegaA = 0.0;}
-	if (fabs(RmagB) < 0.0001) {omegaB = 0.0;}
+	if (fabs(RmagA) < 0.0001) 
+		omegaA = 0.0;
+	if (fabs(RmagB) < 0.0001) 
+		omegaB = 0.0;
 
 
 	//printf("aircraftA omega: %f\n", omegaA);
 	//printf("aircraftB omega: %f\n", omegaB);
 	// find direction of rotation. R_center_to_vehicle cross Velocity_Vec
-	if (-1.0*(RvCA[1]*aircraftA.velocityX[0] - RvCA[0]*aircraftA.velocityY[0]) < 0.0) { omegaA = fabs(omegaA); }
-	else { omegaA = -fabs(omegaA); }
-
-		if (-1.0*(RvCB[1]*aircraftB.velocityX[0] - RvCB[0]*aircraftB.velocityY[0]) < 0.0) { omegaB = fabs(omegaB); }
-	else { omegaA = -fabs(omegaB); }
+	if (-1.0*(RvCA[1]*aircraftA.velocityX[0] - RvCA[0]*aircraftA.velocityY[0]) < 0.0) 
+		omegaA = fabs(omegaA);
+	else 
+		omegaA = -fabs(omegaA);
+	if (-1.0*(RvCB[1]*aircraftB.velocityX[0] - RvCB[0]*aircraftB.velocityY[0]) < 0.0) 
+		omegaB = fabs(omegaB);
+	else 
+		omegaA = -fabs(omegaB);
 
 	//printf("omegaA %f\n", omegaA);
 	//--------------------------------------------------------
@@ -2174,13 +2186,11 @@ CA_Predict(aircraftInfo & aircraftA, aircraftInfo & aircraftB) {
 		thetaB_i = (accDirB+180.0) * TO_RADIANS + omegaB*t;
 		//printf("thetaA_i %f\n", thetaA_i);
 
-		
 		// Vector from center of rotation to new predicted position
 		RvecA_i[0] = RmagA*cos(thetaA_i);
 		RvecA_i[1] = RmagA*sin(thetaA_i);
 		RvecB_i[0] = RmagB*cos(thetaB_i);
 		RvecB_i[1] = RmagB*sin(thetaB_i);
-
 
 		//printf("RvecA_i[0] %f\n", RvecA_i[0]);
 		//printf("RvecA_i[1] %f\n", RvecA_i[1]);
@@ -2198,7 +2208,6 @@ CA_Predict(aircraftInfo & aircraftA, aircraftInfo & aircraftB) {
 		mavlink_mission_item_t ourFuturePos = NewAvoidWaypoint(RpredictA[0], RpredictA[1], aircraftA);
 		mavlink_mission_item_t otherFuturePos = NewAvoidWaypoint(RpredictB[0], RpredictB[1], aircraftB);
 		//printf("Predicted position: (%f, %f)\n", ourFuturePos.x, ourFuturePos.y);
-
 
 		//printf("ourFuturePos.x %f\n", ourFuturePos.x);
 		//printf("ourFuturePos.y %f\n", ourFuturePos.y);
@@ -2252,9 +2261,12 @@ relHdg(double currentHdg, double otherHdg)
 	double tmpHdg = otherHdg - currentHdg;
 
 	double relativeHdg;
-	if (tmpHdg > 180) { relativeHdg = tmpHdg - 360;}
-	else if (tmpHdg < -180) { relativeHdg = tmpHdg + 360; }
-	else {relativeHdg = tmpHdg;}
+	if (tmpHdg > 180) 
+		relativeHdg = tmpHdg - 360;
+	else if (tmpHdg < -180) 
+		relativeHdg = tmpHdg + 360;
+	else 
+		relativeHdg = tmpHdg; 
 
 	return relativeHdg;
 }
@@ -2264,7 +2276,6 @@ void
 Autopilot_Interface::
 CA_Avoid( aircraftInfo &aircraftA, aircraftInfo &aircraftB, predictedCollision &collision)
 {
-	
 	double missDist = 75; //Meters
 	double turnRadius = 50; //Meters
 	double avoidVec[2] = {0};
@@ -2294,20 +2305,21 @@ CA_Avoid( aircraftInfo &aircraftA, aircraftInfo &aircraftB, predictedCollision &
 	addToFile(convertToString(relativeHdg), "Relative Heading");
 
 	//Avoid if other aircraft is approaching from the side
-    	if ( fabs(relativeHdg) > 30.0 && fabs(relativeHdg) < 150.0) {
-
+    	if ( fabs(relativeHdg) > 30.0 && fabs(relativeHdg) < 150.0)
+	{
 		mavlink_mission_item_t distVec = distanceVectors(aircraftB.lat[0], aircraftB.lon[0], aircraftA.lat[0], aircraftA.lon[0]);
-    	distMag = sqrt( pow((distVec.x),2) + pow(distVec.y, 2));
-    	distHdg = atan2(distVec.y, distVec.x);
+    		distMag = sqrt( pow((distVec.x),2) + pow(distVec.y, 2));
+    		distHdg = atan2(distVec.y, distVec.x);
 
-    	//Find avoid point locaion
-      addHdg = atan(missDist/distMag);
-    	avdDist = sqrt(pow(missDist,2) + pow(distMag,2));
+    		//Find avoid point locaion
+      		addHdg = atan(missDist/distMag);
+    		avdDist = sqrt(pow(missDist,2) + pow(distMag,2));
 
-    	if (relativeHdg > 0.0) {addHdg = -addHdg;}
+    		if (relativeHdg > 0.0)
+			addHdg = -addHdg;
 
-    	avdHdg = distHdg + addHdg;
-    	avoidVec[0] = avdDist * cos(avdHdg);
+    		avdHdg = distHdg + addHdg;
+    		avoidVec[0] = avdDist * cos(avdHdg);
 		avoidVec[1] = avdDist * sin(avdHdg);
 
 		printf("AvoidVec[0]: %f\n", avoidVec[0]);
@@ -2319,13 +2331,13 @@ CA_Avoid( aircraftInfo &aircraftA, aircraftInfo &aircraftB, predictedCollision &
 		addToFile(convertToString(avdHdg), "avdHdg");
 		addToFile(convertToString(avoidVec[0]), "avoidVec[x]");
 		addToFile(convertToString(avoidVec[1]), "avoidVec[y]");
-	printf("avoidVex x,y: %f, %f\n", avoidVec[0], avoidVec[1]);
-    }
-
-	 //avoid if other aircraft is approaching from front or rear
-    else {
-
-    	//Find heading to the goal waypoint
+		printf("avoidVex x,y: %f, %f\n", avoidVec[0], avoidVec[1]);
+	}
+	
+	//avoid if other aircraft is approaching from front or rear
+    	else 
+	{
+    		//Find heading to the goal waypoint
 		headingVector = distanceVectors(currentMission[currentWaypoint].x, currentMission[currentWaypoint].y, aircraftA.lat[0], aircraftA.lon[0]);
 		double targetHdg = atan2(headingVector.y, headingVector.x);
 		
@@ -2342,39 +2354,38 @@ CA_Avoid( aircraftInfo &aircraftA, aircraftInfo &aircraftB, predictedCollision &
 		addToFile(convertToString(avdHdg), "avdHdg");
 		addToFile(convertToString(avoidVec[0]), "avoidVec[x]");
 		addToFile(convertToString(avoidVec[1]), "avoidVec[y]");
-	printf("head to tail avoidVex x,y: %f, %f\n", avoidVec[0], avoidVec[1]);
-
-   }
+		printf("head to tail avoidVex x,y: %f, %f\n", avoidVec[0], avoidVec[1]);
+   	}
 
 	printf("avoidVex x,y: %f, %f\n", avoidVec[0], avoidVec[1]);
-    //generate the waypoint
-    mavlink_mission_item_t avoidWaypoint;
-    //avoidWaypoint.x = avoidVec[0];
-    //avoidWaypoint.y = avoidVec[1];
-    //avoidWaypoint.z = currentMission[endVal].z;
+    	//generate the waypoint
+    	mavlink_mission_item_t avoidWaypoint;
+    	//avoidWaypoint.x = avoidVec[0];
+    	//avoidWaypoint.y = avoidVec[1];
+    	//avoidWaypoint.z = currentMission[endVal].z;
 
-		printf("avoidVex x,y: %f, %f\n", avoidVec[0], avoidVec[1]);
-	 avoidWaypoint = NewAvoidWaypoint(avoidVec[0], avoidVec[1], aircraftA);
+	printf("avoidVex x,y: %f, %f\n", avoidVec[0], avoidVec[1]);
+	avoidWaypoint = NewAvoidWaypoint(avoidVec[0], avoidVec[1], aircraftA);
 	printf("avoidWaypoint.x after: %f\n", avoidWaypoint.x);
-printf("avoidWaypoint.x %f , y: %f\n", avoidWaypoint.x, avoidWaypoint.y);
+	printf("avoidWaypoint.x %f , y: %f\n", avoidWaypoint.x, avoidWaypoint.y);
 	printf("avoidVex x,y: %f, %f\n", avoidVec[0], avoidVec[1]);
 
-    //log its lat and lon
-    addToFile(convertToString(avoidWaypoint.x), "avoidWP lat (x)");
-    addToFile(convertToString(avoidWaypoint.y), "avoidWP lon (y)");
+    	//log its lat and lon
+    	addToFile(convertToString(avoidWaypoint.x), "avoidWP lat (x)");
+	addToFile(convertToString(avoidWaypoint.y), "avoidWP lon (y)");
 
-	 //See if distance is correct
-	 addToFile(convertToString(gpsDistance(avoidWaypoint.x, avoidWaypoint.y, aircraftA.lat[0], aircraftA.lon[0])), "Distance to avoid point");
+	//See if distance is correct
+	addToFile(convertToString(gpsDistance(avoidWaypoint.x, avoidWaypoint.y, aircraftA.lat[0], aircraftA.lon[0])), "Distance to avoid point");
 
-    //insert the waypoint
-    insert_waypoint( avoidWaypoint, currentWaypoint);
-
-
-    //Tell the aircraft to go to the waypoint
-    setCurrentWaypoint(currentWaypoint); //May not need this now that the write waypoints function is fixed
+    	//insert the waypoint
+    	insert_waypoint( avoidWaypoint, currentWaypoint);
 
 
-	 addToFile(convertToString(currentWaypoint), "Replaced waypoint and current waypoint");
-    printf("Collision point created\n");
+    	//Tell the aircraft to go to the waypoint
+    	setCurrentWaypoint(currentWaypoint); //May not need this now that the write waypoints function is fixed
+
+
+	addToFile(convertToString(currentWaypoint), "Replaced waypoint and current waypoint");
+    	printf("Collision point created\n");
 
 }
