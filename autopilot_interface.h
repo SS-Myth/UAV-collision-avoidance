@@ -270,7 +270,6 @@ struct Mavlink_Messages {
 	{
 		time_stamps.reset_timestamps();
 	}
-
 };
 
 
@@ -279,8 +278,7 @@ struct Mavlink_Messages {
  * Ex: To read battery status. Set read_battery_status to true
  */
 struct Read_Messages {
-
-
+	
     bool read_heartbeat;
     bool read_sys_status;
     bool read_battery_status;
@@ -313,9 +311,7 @@ struct Read_Messages {
         read_power_status = false;
         read_mission_ack = false;
         read_command_ack = false;
-
     }
-
 };
 
 
@@ -355,18 +351,15 @@ struct Waypoint{
     }
 };
 
-
 struct aircraftInfo {
-
-
+	
 	aircraftInfo();
-
 	//Aircraft positions
 	// 0: current position, 1: last position (one second in the past), 2: very last position (two seconds in the past)
 	double lat [3];
 	double lon [3];
 	double alt [3];
-   double gpsTime [3];
+   	double gpsTime [3];
 	//Aircraft velocity and accelerations
 	//0: current velocity/acceleration, 1: last velocity (one second in the past)
 	double velocityX [2];
@@ -385,19 +378,19 @@ struct aircraftInfo {
 	//Stored heading
 	double Hdg [2];
 	
-/*	Creats a safety bubble around the aircraft that increases in radius with each
+	/*Creats a safety bubble around the aircraft that increases in radius with each
 	predicted future way point up to 10 way points	*/
 	uint64_t safetyBubble; 
 
 	uint8_t priority;
-
 };
 
 struct predictedCollision {
-
+	
 	float timeToCollision;
 	bool collisionDetected;
 	float relativeHeading;
+	mavlink_mission_item_t collisionLocation;
 };
 
 class Autopilot_Interface
