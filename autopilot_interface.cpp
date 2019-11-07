@@ -2145,8 +2145,8 @@ CA_Predict(aircraftInfo &aircraftA, aircraftInfo &aircraftB)
 	//printf("RvCA[1] %f\n", RvCA[1]);
 
 	// Find magnitude of angular rotation (rad/s)
-	omegaA = aircraftA.vTan[0]/RmagA;
-	omegaB = aircraftB.vTan[0]/RmagB;
+	omegaA = aircraftA.vTan[0] / RmagA;
+	omegaB = aircraftB.vTan[0] / RmagB;
 	if (fabs(RmagA) < 0.0001) 
 		omegaA = 0.0;
 	if (fabs(RmagB) < 0.0001) 
@@ -2239,6 +2239,8 @@ CA_Predict(aircraftInfo &aircraftA, aircraftInfo &aircraftB)
 			collisionPoint.collisionDetected = true;
 			collisionPoint.timeToCollision = t;
 			collisionPoint.relativeHeading = rH;
+			collisionPoint.collisionLocation.x = otherFuturePos.x;
+			collisionPoint.collisionLocation.y = otherFuturePos.y;
 			
 			//printf("Collision detected\n");
 			addToFile("COLLISION DETECTED", "");
