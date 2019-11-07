@@ -2239,8 +2239,8 @@ CA_Predict(aircraftInfo &aircraftA, aircraftInfo &aircraftB)
 			collisionPoint.collisionDetected = true;
 			collisionPoint.timeToCollision = t;
 			collisionPoint.relativeHeading = rH;
-			collisionPoint.collisionLocation.x = otherFuturePos.x;
-			collisionPoint.collisionLocation.y = otherFuturePos.y;
+			collisionPoint.location.x = ourFuturePos.x;
+			collisionPoint.location.y = ourFuturePos.y;
 			
 			//printf("Collision detected\n");
 			addToFile("COLLISION DETECTED", "");
@@ -2276,7 +2276,7 @@ relHdg(double currentHdg, double otherHdg)
 
 void 
 Autopilot_Interface::
-CA_Avoid( aircraftInfo &aircraftA, aircraftInfo &aircraftB, predictedCollision &collision)
+CA_Avoid(aircraftInfo &aircraftA, aircraftInfo &aircraftB, predictedCollision &collision)
 {
 	double missDist = 75; //Meters
 	double turnRadius = 50; //Meters
@@ -2293,7 +2293,6 @@ CA_Avoid( aircraftInfo &aircraftA, aircraftInfo &aircraftB, predictedCollision &
     	double lonB = aircraftB.lon[0];
     	uint64_t buffB = aircraftB.safetyBubble;
 
-
 	//Define more variables
 	double distMag;
 	double distHdg;
@@ -2301,13 +2300,40 @@ CA_Avoid( aircraftInfo &aircraftA, aircraftInfo &aircraftB, predictedCollision &
 	double avdDist;
 	double avdHdg;
 	//double targetHdg
-	//double addHdg
+	
+	double collisionDist;
+	uint64_t avdLength = 0;
 
      	double relativeHdg = relHdg(aircraftA.Hdg[0], aircraftB.Hdg[0]);
 	addToFile(convertToString(relativeHdg), "Relative Heading");
+	
+	//Sidestep
+	bool right = true;
+	int count = 6;
+	while(collision.collisionDetected && count > 0)
+	{
+		collisionDist = sqrt(pow((collision.location.x - aircraftA.lat[0]), 2) + pow((collision.location.y - aircraftA.lon[0]), 2));
+		
+		if(right)
+		{
+			avdLength += (2 * buffA);
+			addHdg = atan(avdLength / collisionDist);
+		}
+		else
+			addHdg = -atan(avdLength / collisionDist);
+		
+		avdHdg = aircraftA.Hdg[0] + addHdg;
+		
+		//predictNewCollision(collision);
+		//if new collision detected continue loop
+		//else loop will end and current values committed to waypoint
+		
+		right = !right;
+		count--;
+	}
 
 	//Avoid if other aircraft is approaching from the side
-    	if ( fabs(relativeHdg) > 30.0 && fabs(relativeHdg) < 150.0)
+    	if (fabs(relativeHdg) > 30.0 && fabs(relativeHdg) < 150.0)
 	{
 		mavlink_mission_item_t distVec = distanceVectors(aircraftB.lat[0], aircraftB.lon[0], aircraftA.lat[0], aircraftA.lon[0]);
     		distMag = sqrt( pow((distVec.x),2) + pow(distVec.y, 2));
