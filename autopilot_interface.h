@@ -390,7 +390,7 @@ struct predictedCollision {
 	float timeToCollision;
 	bool collisionDetected;
 	float relativeHeading;
-	mavlink_mission_item_t collisionLocation;
+	mavlink_mission_item_t location;
 };
 
 class Autopilot_Interface
