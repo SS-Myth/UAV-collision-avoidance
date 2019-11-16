@@ -2302,27 +2302,33 @@ CA_Avoid(aircraftInfo &aircraftA, aircraftInfo &aircraftB, predictedCollision &c
 	//double targetHdg
 	
 	double collisionDist;
-	uint64_t avdLength = 0;
+	double avdAlt;
+	uint64_t avdLength;
+	
+	int count;
+	bool right;
 
      	double relativeHdg = relHdg(aircraftA.Hdg[0], aircraftB.Hdg[0]);
 	addToFile(convertToString(relativeHdg), "Relative Heading");
 	
 	//Sidestep
-	bool right = true;
-	int count = 6;
+	right = true;
+	count = 6;
+	avdLength = 0;
 	while(collision.collisionDetected && count > 0)
 	{
 		collisionDist = sqrt(pow((collision.location.x - aircraftA.lat[0]), 2) + pow((collision.location.y - aircraftA.lon[0]), 2));
 		
 		if(right)
 		{
-			avdLength += (2 * buffA);
+			avdLength += (2 * buffA); //could change to single radius increments to make less severe manuever
 			addHdg = atan(avdLength / collisionDist);
 		}
 		else
 			addHdg = -atan(avdLength / collisionDist);
 		
 		avdHdg = aircraftA.Hdg[0] + addHdg;
+		avdDist = sqrt(pow(collisionDist, 2) + pow(avdLength, 2));
 		
 		//predictNewCollision(collision);
 		//if new collision detected continue loop
@@ -2330,6 +2336,43 @@ CA_Avoid(aircraftInfo &aircraftA, aircraftInfo &aircraftB, predictedCollision &c
 		
 		right = !right;
 		count--;
+	}
+	
+	//TrackEarly
+	
+	//Vertical
+	right = true;
+	count = 6;
+	avdLength = 0;
+	while(collision.collisionDetected && count > 0)
+	{
+		collisionDist = sqrt(pow((collision.location.x - aircraftA.lat[0]), 2) + pow((collision.location.y - aircraftA.lon[0]), 2));
+		
+		if(right)
+		{
+			avdLength += (2 * buffA);
+			avdAlt = aircraftA.alt[0] + avdLength;
+		}
+		else
+			avdAlt = aircraftA.alt[0] - avdLength;
+		
+		//if new collision detected continue loop
+		//else loop will end and current values committed to waypoint
+		
+		up = !up;
+		count--;
+	}
+	
+	//Speed
+	right = true;
+	count = 6;
+	while(collision.collision.collisionDetected && count > 0)
+	{
+		collisionDist = sqrt(pow((collision.location.x - aircraftA.lat[0]), 2) + pow((collision.location.y - aircraftA.lon[0]), 2));
+		
+		if(right)
+		{
+		}
 	}
 
 	//Avoid if other aircraft is approaching from the side
