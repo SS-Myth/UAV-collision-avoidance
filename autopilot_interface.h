@@ -376,6 +376,7 @@ struct aircraftInfo {
 	double futureDisty [3];
 
 	//Stored heading
+	//0: current heading, 1: last heading (one second in the past)
 	double Hdg [2];
 	
 	/*Creats a safety bubble around the aircraft that increases in radius with each
