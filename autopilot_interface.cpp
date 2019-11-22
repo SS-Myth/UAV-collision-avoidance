@@ -1775,7 +1775,7 @@ insert_waypoint ( mavlink_mission_item_t &newWaypoint, uint16_t &desiredSeqNumbe
 
 void
 Autopilot_Interface::
-updateAircraftInfo(aircraftInfo &aircraftObj, mavlink_global_position_int_t gpos, mavlink_adsb_vehicle_t adsb, int plane)
+updateAircraftInfo(aircraftInfo & aircraftObj, mavlink_global_position_int_t gpos, mavlink_adsb_vehicle_t adsb, int plane)
 {
 
 	float groundSpeed;
@@ -1783,7 +1783,7 @@ updateAircraftInfo(aircraftInfo &aircraftObj, mavlink_global_position_int_t gpos
 	//Shift previous data backwards
 	aircraftObj.lat[2] = aircraftObj.lat[1];
 	aircraftObj.lon[2] = aircraftObj.lon[1];
-   aircraftObj.gpsTime[2] = aircraftObj.gpsTime[1];
+   	aircraftObj.gpsTime[2] = aircraftObj.gpsTime[1];
 	aircraftObj.lat[1] = aircraftObj.lat[0];
 	aircraftObj.lon[1] = aircraftObj.lon[0];
 	aircraftObj.gpsTime[1] = aircraftObj.gpsTime[0];
@@ -1794,11 +1794,13 @@ updateAircraftInfo(aircraftInfo &aircraftObj, mavlink_global_position_int_t gpos
 	aircraftObj.velocityY[1] = aircraftObj.velocityY[0];
 	aircraftObj.vTan[1]      = aircraftObj.vTan[0];
 
-	if (plane == 1) { //If working with the controlled plane, grab from internal
-		aircraftObj.lat[0] 		  = gpos.lat / 1E7;
-		aircraftObj.lon[0] 	     = gpos.lon / 1E7;
+	//If working with the controlled plane, grab from internal
+	if (plane == 1) 
+	{ 
+		aircraftObj.lat[0] = gpos.lat / 1E7;
+		aircraftObj.lon[0] = gpos.lon / 1E7;
 
-		aircraftObj.gpsTime[0]       = gpos.time_boot_ms;
+		aircraftObj.gpsTime[0] = gpos.time_boot_ms;
 
 		// Derive velocity and heading from distance vectors
 		mavlink_mission_item_t distVec = distanceVectors(aircraftObj.lat[0], aircraftObj.lon[0], aircraftObj.lat[1], aircraftObj.lon[1]);
@@ -1819,14 +1821,17 @@ updateAircraftInfo(aircraftInfo &aircraftObj, mavlink_global_position_int_t gpos
 		aircraftObj.Hdg[0]        = gpos.hdg / 100.0;
 */
 
-		aircraftObj.vTan[0]       = sqrt(pow(aircraftObj.velocityX[0],2) + pow(aircraftObj.velocityY[0], 2));
+		aircraftObj.vTan[0] = sqrt(pow(aircraftObj.velocityX[0],2) + pow(aircraftObj.velocityY[0], 2));
 
 		//printf("update gpos.lat: %f\n", gpos.lat/1E7);
 		//printf("update gpos.velx: %f\n", gpos.vx/100.0);
 		//printf("update gpos.vely: %f\n", gpos.vy/100.0);
 
 	}
-	else { // If working with other plane grab from ADS-B
+	
+	// else if working with other plane grab from ADS-B
+	else 
+	{ 
 		aircraftObj.lat[0] = adsb.lat / 1E7;
 		aircraftObj.lon[0] = adsb.lon / 1E7;
 
@@ -1836,7 +1841,7 @@ updateAircraftInfo(aircraftInfo &aircraftObj, mavlink_global_position_int_t gpos
 
 		aircraftObj.velocityX[0] = groundSpeed * cos(aircraftObj.Hdg[0] * TO_RADIANS);
 		aircraftObj.velocityY[0] = groundSpeed * sin(aircraftObj.Hdg[0] * TO_RADIANS);
-		aircraftObj.vTan[0]      = sqrt(pow(aircraftObj.velocityX[0],2) + pow(aircraftObj.velocityY[0], 2));
+		aircraftObj.vTan[0] = sqrt(pow(aircraftObj.velocityX[0],2) + pow(aircraftObj.velocityY[0], 2));
 		//printf("update adsb.lat: %f\n", adsb.lat/1E7);
 	}
 
@@ -1871,13 +1876,13 @@ CA_predict_thread()
 	bool otherUpdated = false;
 	int fractionSinceUpdate = 0;
 
-	while ( ! time_to_exit ) {
-
-	  ///---------------------------------
-      ///
-      /// Gather All Parameters for Our Plane, such as lat,lon,velocity,acceleration, Heading,
-      ///
-      ///----------------------------------
+	while ( ! time_to_exit ) 
+	{
+		///---------------------------------
+		///
+      		/// Gather All Parameters for Our Plane, such as lat,lon,velocity,acceleration, Heading,
+      		///
+      		///----------------------------------
 
 		//update stored messages
 		gpos = current_messages.global_position_int;
@@ -1891,17 +1896,18 @@ CA_predict_thread()
 		//printf("gpos lon %f\n", gpos.lon/1E7);
 
 		//Update check for the controlled aircraft
-		if ( fabs(ourAircraft.lat[0] - (double) gpos.lat/1E7) > 0.0000001 && fabs(ourAircraft.lon[0] - (double) gpos.lon/1E7) > 0.0000001 ) {
+		if ( fabs(ourAircraft.lat[0] - (double) gpos.lat/1E7) > 0.0000001 && fabs(ourAircraft.lon[0] - (double) gpos.lon/1E7) > 0.0000001 ) 
+		{
 			updateAircraftInfo(ourAircraft, gpos, dummydataADSB, 1);
 
 			//Now that we have updated the position, lets inform the other functions
 			ourUpdated = true;
-		
 		}
 
 
 		//If the position has not been updated in the current messages then start counting
-		if ( fabs(otherAircraft.lat[0] - (double) adsb.lat/1E7) < 0.00001 && fabs(otherAircraft.lon[0] - (double) adsb.lon/1E7) < 0.00001)  {
+		if ( fabs(otherAircraft.lat[0] - (double) adsb.lat/1E7) < 0.00001 && fabs(otherAircraft.lon[0] - (double) adsb.lon/1E7) < 0.00001)  
+		{
 			fractionSinceUpdate++; //Time = .3333*fractionSinceUpdate 
 		}
 		
@@ -1911,7 +1917,8 @@ CA_predict_thread()
 		//printf("adsb lat  %f\n",adsb.lat/1E7);
 		//printf("adsb lon  %f\n",adsb.lon/1E7);
 		
-		if ( fabs(otherAircraft.lat[0] - (double) adsb.lat/1E7) > 0.000001 || fabs(otherAircraft.lon[0] - (double) adsb.lon/1E7) > 0.000001 ){
+		if ( fabs(otherAircraft.lat[0] - (double) adsb.lat/1E7) > 0.000001 || fabs(otherAircraft.lon[0] - (double) adsb.lon/1E7) > 0.000001 )
+		{
 			//Update other aircraft
 			updateAircraftInfo(otherAircraft, gpos, adsb, 2);
 			
@@ -1922,7 +1929,9 @@ CA_predict_thread()
 		}
 
 		//printf("log criteria dist: %lf\n",(double) abs(otherAircraft.lat[0] - (double) adsb.lat/1E7));
-		if ( fractionSinceUpdate > 9 ) { //Get rid of zeros in otherAircraft vector[2]
+		if ( fractionSinceUpdate > 9 ) 
+		{ 
+			//Get rid of zeros in otherAircraft vector[2]
 			updateAircraftInfo(otherAircraft, dummydataGPOS, adsb, 2);
 		}
 
@@ -1956,7 +1965,7 @@ CA_predict_thread()
 			//printf("Done Logging\n");
 
 			//printf("\nPREDICT\n");			//Predict using the logged point
-			collision = CA_Predict(ourAircraft, otherAircraft);
+			collision = CA_Predict(ourAircraft, otherAircraft, ourAircraft.Hdg[0]);
 			//collision.collisionDetected == true;
 			
 			printf("Collision predicted? %d\n", collision.collisionDetected);
@@ -2030,10 +2039,10 @@ return distVec;
 
 predictedCollision
 Autopilot_Interface::
-CA_Predict(aircraftInfo &aircraftA, aircraftInfo &aircraftB) 
+CA_Predict(aircraftInfo & aircraftA, aircraftInfo & aircraftB)
 {
 	float fps = 10.0; //fps meaning future points
-	double  rH; // for relative Heading of the planes
+	double rH; // for relative Heading of the planes
 	float t;
 	double accDirA;
 	double accDirB;
@@ -2061,10 +2070,15 @@ CA_Predict(aircraftInfo &aircraftA, aircraftInfo &aircraftB)
 	// Set up equations of predicted motion for both aircraft
 	//-----------------------------------------------------------------------------
 	
-   	aircraftA.Hdg[0] = atan2(aircraftA.velocityY[0], aircraftA.velocityX[0]) * 180.0/3.1415;
+	aircraftA.Hdg[0] = aircraftA.Hdg[0] * 180 / 3.1415;
+	aircraftA.Hdg[1] = aircraftA.Hdg[1] * 180 / 3.1415;
+	aircraftB.Hdg[0] = aircraftB.Hdg[0] * 180 / 3.1415;
+	aircraftB.Hdg[1] = aircraftB.Hdg[1] * 180 / 3.1415;
+	
+   	/*aircraftA.Hdg[0] = atan2(aircraftA.velocityY[0], aircraftA.velocityX[0]) * 180.0/3.1415;
    	aircraftA.Hdg[1] = atan2(aircraftA.velocityY[1], aircraftA.velocityX[1]) * 180.0/3.1415;
    	aircraftB.Hdg[0] = atan2(aircraftB.velocityY[0], aircraftB.velocityX[0]) * 180.0/3.1415;
-   	aircraftB.Hdg[1] = atan2(aircraftB.velocityY[1], aircraftB.velocityX[1]) * 180.0/3.1415;
+   	aircraftB.Hdg[1] = atan2(aircraftB.velocityY[1], aircraftB.velocityX[1]) * 180.0/3.1415;*/
 
 	if (aircraftA.Hdg[0] > aircraftA.Hdg[1])
 		accDirA = aircraftA.Hdg[0] + 90.0;
@@ -2276,7 +2290,7 @@ relHdg(double currentHdg, double otherHdg)
 
 void 
 Autopilot_Interface::
-CA_Avoid(aircraftInfo &aircraftA, aircraftInfo &aircraftB, predictedCollision &collision)
+CA_Avoid(aircraftInfo & aircraftA, aircraftInfo & aircraftB, predictedCollision & collision)
 {
 	double missDist = 75; //Meters
 	double turnRadius = 50; //Meters
@@ -2330,7 +2344,7 @@ CA_Avoid(aircraftInfo &aircraftA, aircraftInfo &aircraftB, predictedCollision &c
 		avdHdg = aircraftA.Hdg[0] + addHdg;
 		avdDist = sqrt(pow(collisionDist, 2) + pow(avdLength, 2));
 		
-		//predictNewCollision(collision);
+		collision = CA_Predict(aircraftA, aircraftB, avdHdg);
 		//if new collision detected continue loop
 		//else loop will end and current values committed to waypoint
 		
