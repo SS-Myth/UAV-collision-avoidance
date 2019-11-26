@@ -386,11 +386,12 @@ struct aircraftInfo {
 	uint8_t priority;
 };
 
-struct predictedCollision {
-	
+struct predictedCollision 
+{	
 	float timeToCollision;
 	bool collisionDetected;
 	float relativeHeading;
+	double headingB;
 	mavlink_mission_item_t location;
 };
 
