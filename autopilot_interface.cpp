@@ -2070,6 +2070,7 @@ CA_Predict(aircraftInfo & aircraftA, aircraftInfo & aircraftB)
 	// Set up equations of predicted motion for both aircraft
 	//-----------------------------------------------------------------------------
 	
+	//convert aircraft heading to degrees
 	aircraftA.Hdg[0] = aircraftA.Hdg[0] * 180 / 3.1415;
 	aircraftA.Hdg[1] = aircraftA.Hdg[1] * 180 / 3.1415;
 	aircraftB.Hdg[0] = aircraftB.Hdg[0] * 180 / 3.1415;
@@ -2189,6 +2190,9 @@ CA_Predict(aircraftInfo & aircraftA, aircraftInfo & aircraftB)
 	float RvecB_i [2];
 	float RpredictB [2];
 	float RpredictA [2];
+	int bubbleRadius;
+	double predictedDistance;
+	double futureHdgB;
 
 	for (t = 0.0; t < fps; t=t+1.0)
 	{
@@ -2196,8 +2200,8 @@ CA_Predict(aircraftInfo & aircraftA, aircraftInfo & aircraftB)
 		//---------------------------------------------------------------------------------------------------------
 		//	Predict future positions
 		//---------------------------------------------------------------------------------------------------------
-		thetaA_i = (accDirA+180.0) * TO_RADIANS + omegaA*t;
-		thetaB_i = (accDirB+180.0) * TO_RADIANS + omegaB*t;
+		thetaA_i = (accDirA+180.0) * TO_RADIANS + omegaA * t;
+		thetaB_i = (accDirB+180.0) * TO_RADIANS + omegaB * t;
 		//printf("thetaA_i %f\n", thetaA_i);
 
 		// Vector from center of rotation to new predicted position
@@ -2217,6 +2221,9 @@ CA_Predict(aircraftInfo & aircraftA, aircraftInfo & aircraftB)
 		
 		//printf("RpredictA[0] %f\n", RpredictA[0]);
 		//printf("RpredictA[1] %f\n", RpredictA[1]);
+		
+		//determine the heading of B at the predicted location
+		futureHdgB = 90 + (270 - (aircraftB.Hdg[0] + thetaB_i * 180 / 3.1415));
 
 		//Creates a future position item based on the current position and future distance
 		mavlink_mission_item_t ourFuturePos = NewAvoidWaypoint(RpredictA[0], RpredictA[1], aircraftA);
@@ -2239,8 +2246,8 @@ CA_Predict(aircraftInfo & aircraftA, aircraftInfo & aircraftB)
 		//
 		//----------------------------------------------------------------------------------------------
 
-		int bubbleRadius = aircraftA.safetyBubble;
-		double predictedDistance = gpsDistance(ourFuturePos.x, ourFuturePos.y, otherFuturePos.x, otherFuturePos.y);
+		bubbleRadius = aircraftA.safetyBubble;
+		predictedDistance = gpsDistance(ourFuturePos.x, ourFuturePos.y, otherFuturePos.x, otherFuturePos.y);
 
 		//Log
 		addToFile(convertToString(predictedDistance), "Future predicted distance");
@@ -2248,13 +2255,18 @@ CA_Predict(aircraftInfo & aircraftA, aircraftInfo & aircraftB)
 		collisionPoint.collisionDetected = false;
 
 		//	printf("NEED TO CHANGE: Collision detected if predicted distance <=1\n");
-		if (predictedDistance <= bubbleRadius) { //MODIFIED FOR LOGGING PURPOSES!!! NOT OFFICIAL CODE
+		if (predictedDistance <= bubbleRadius) 
+		{ 
+			//MODIFIED FOR LOGGING PURPOSES!!! NOT OFFICIAL CODE
 
 			collisionPoint.collisionDetected = true;
 			collisionPoint.timeToCollision = t;
 			collisionPoint.relativeHeading = rH;
-			collisionPoint.location.x = ourFuturePos.x;
-			collisionPoint.location.y = ourFuturePos.y;
+			collisionPoint.headingB = futureHdgB;
+			collisionPoint.locationA.x = ourFuturePos.x;
+			collisionPoint.locationA.y = ourFuturePos.y;
+			collisionPoint.locationB.x = otherFuturePos.x;
+			collisionPoint.locationB.y = otherFuturePos.y;
 			
 			//printf("Collision detected\n");
 			addToFile("COLLISION DETECTED", "");
@@ -2287,6 +2299,19 @@ relHdg(double currentHdg, double otherHdg)
 	return relativeHdg;
 }
 
+predictedCollision 
+considerStrategy(predictedCollision collisionPoint, aircraftInfo & aircraftA, aircraftInfo & aircraftB, double headingA, double distA)
+{
+	double futureLatA = asin(sin(aircraftA.lat[0]) * cos(distA / Radius_E) +
+				 cos(aircraftA.lat[0]) * sin(distA / Radius_E) * cos(headingA * TO_RADIANS));
+	double futureLonA = aircraftA.lon[0] + atan2(sin(headingA * TO_RADIANS) * sin(distA / RADIUS_E) * cos(aircraftA.lat[0]), 
+						     cos(distA / RADIUS_E) * sin(aircraftA.lat[0]) * sin(futureLatA));
+	//seconds it takes for A to get to new point
+	float time = distA / sqrt(pow(aircraftA.velocityX[0], 2), aircraftA.velocityY[0], 2));
+	for(int i = time, i > 0, i--)
+	{
+	}
+}
 
 void 
 Autopilot_Interface::
@@ -2344,7 +2369,7 @@ CA_Avoid(aircraftInfo & aircraftA, aircraftInfo & aircraftB, predictedCollision 
 		avdHdg = aircraftA.Hdg[0] + addHdg;
 		avdDist = sqrt(pow(collisionDist, 2) + pow(avdLength, 2));
 		
-		collision = CA_Predict(aircraftA, aircraftB, avdHdg);
+		collision = considerStrategy(collision, 
 		//if new collision detected continue loop
 		//else loop will end and current values committed to waypoint
 		
