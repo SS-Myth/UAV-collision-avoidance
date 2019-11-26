@@ -392,7 +392,10 @@ struct predictedCollision
 	bool collisionDetected;
 	float relativeHeading;
 	double headingB;
-	mavlink_mission_item_t location;
+	
+	//predicted locations of aircraft A and B at time of collision
+	mavlink_mission_item_t locationA;
+	mavlink_mission_item_t locationB;
 };
 
 class Autopilot_Interface
