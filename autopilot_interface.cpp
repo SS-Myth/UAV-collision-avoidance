@@ -1896,7 +1896,8 @@ CA_predict_thread()
 		//printf("gpos lon %f\n", gpos.lon/1E7);
 
 		//Update check for the controlled aircraft
-		if ( fabs(ourAircraft.lat[0] - (double) gpos.lat/1E7) > 0.0000001 && fabs(ourAircraft.lon[0] - (double) gpos.lon/1E7) > 0.0000001 ) 
+		//If our position has changed then updateAircraftInfo(A)
+		if ( fabs(ourAircraft.lat[0] - (double) gpos.lat/1E7) > 0.0000001 || fabs(ourAircraft.lon[0] - (double) gpos.lon/1E7) > 0.0000001 ) 
 		{
 			updateAircraftInfo(ourAircraft, gpos, dummydataADSB, 1);
 
@@ -1904,7 +1905,27 @@ CA_predict_thread()
 			ourUpdated = true;
 		}
 
-
+		//If other position has changed we received new info from adsb; updateAircraftInfo(B)
+		if ( fabs(otherAircraft.lat[0] - (double) adsb.lat/1E7) > 0.000001 || fabs(otherAircraft.lon[0] - (double) adsb.lon/1E7) > 0.000001 )
+		{
+			//Update other aircraft
+			updateAircraftInfo(otherAircraft, gpos, adsb, 2);
+			
+			//Now that we have updated the position, lets inform the other functions
+			otherUpdated = true;
+			fractionSinceUpdate = 0;
+			//printf("logged!\n");
+		}
+		
+		//If other position has not changed but speed = 0; It is hovering
+		else if(adsb.hor_velocity == 0)
+		{
+			updateAircraftInfo(otherAircraft, gpos, adsb, 2);
+			otherUpdated = true;
+			fractionSinceUpdate = 0;
+		}
+		
+		//Else we have not received new info from adsb; disregard sample data
 		//If the position has not been updated in the current messages then start counting
 		if ( fabs(otherAircraft.lat[0] - (double) adsb.lat/1E7) < 0.00001 && fabs(otherAircraft.lon[0] - (double) adsb.lon/1E7) < 0.00001)  
 		{
@@ -1917,31 +1938,22 @@ CA_predict_thread()
 		//printf("adsb lat  %f\n",adsb.lat/1E7);
 		//printf("adsb lon  %f\n",adsb.lon/1E7);
 		
-		if ( fabs(otherAircraft.lat[0] - (double) adsb.lat/1E7) > 0.000001 || fabs(otherAircraft.lon[0] - (double) adsb.lon/1E7) > 0.000001 )
-		{
-			//Update other aircraft
-			updateAircraftInfo(otherAircraft, gpos, adsb, 2);
-			
-			//Now that we have updated the position, lets inform the other functions
-			otherUpdated = true;
-			fractionSinceUpdate = 0;
-			//printf("logged!\n");
-		}
-
+		
 		//printf("log criteria dist: %lf\n",(double) abs(otherAircraft.lat[0] - (double) adsb.lat/1E7));
-		if ( fractionSinceUpdate > 9 ) 
+		/*if ( fractionSinceUpdate > 9 ) 
 		{ 
 			//Get rid of zeros in otherAircraft vector[2]
 			updateAircraftInfo(otherAircraft, dummydataGPOS, adsb, 2);
-		}
+		}*/
 
 
 		//printf("Time since update: %i\n",fractionSinceUpdate);
 		//printf("Ours updated? %d\nOther updated? %d\n", ourUpdated, otherUpdated);
 		//printf("First condition satisfied: %d\n Second condition satisfied: %d\n",(ourUpdated && otherUpdated), (fractionSinceUpdate > 9 && ourUpdated == true));
 
-		//Predict now happens if both the ownships and the other aircraft's position has changed. Or it has been more than 3 seconds
-		if ((ourUpdated == true && otherUpdated == true) || (fractionSinceUpdate > 9 && ourUpdated == true )) { /*9 is 3 seconds since update speed is 1/3 of a second*/
+		//Predict now happens if both the ownships and the other aircraft have updated
+		if ((ourUpdated == true && otherUpdated == true)) 
+		{ /*9 is 3 seconds since update speed is 1/3 of a second*/
 				
 
 			//printf("1/3 seconds since ADS-B update: %i", fractionSinceUpdate);
