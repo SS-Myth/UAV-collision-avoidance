@@ -2318,8 +2318,24 @@ considerStrategy(predictedCollision collisionPoint, aircraftInfo & aircraftA, ai
 						     cos(distA / RADIUS_E) * sin(aircraftA.lat[0]) * sin(futureLatA));
 	//seconds it takes for A to get to new point
 	float time = distA / sqrt(pow(aircraftA.velocityX[0], 2), aircraftA.velocityY[0], 2));
-	for(int i = time, i > 0, i--)
+	
+	//iterative distance of future A and B points based on travel time and velocity
+	double distAIter;
+	double distBIter;
+	
+	//iteratively determine if A and B intersect paths at the same time(creates new collision)
+	for(float i = time, i > 0, i = i - 1.0f)
 	{
+		//predicted location of A at i seconds in the future
+		distAIter = i * sqrt(pow(aircraftA.velocityX[0], 2), aircraftA.velocityY[0], 2));
+		futureLatA = asin(sin(aircraftA.lat[0]) * cos(distAIter / Radius_E) +
+				 cos(aircraftA.lat[0]) * sin(distAIter / Radius_E) * cos(headingA * TO_RADIANS));
+		futureLonA = aircraftA.lon[0] + atan2(sin(headingA * TO_RADIANS) * sin(distAIter / RADIUS_E) * cos(aircraftA.lat[0]), 
+						     cos(distA / RADIUS_E) * sin(aircraftA.lat[0]) * sin(futureLatA));
+		//predicted location of B at i seconds in the future
+		distBIter = i * sqrt(pow(aircraftB.velocityX[0], 2), aircraftB.velocityY[0], 2));
+		futureLatB = asin(sin(aircraftB.lat[0]) * cos(distBIter / Radius_E) + 
+				  cos(aircraftB.lat[0]) * sin(distBIter / Radius_E) * cos(collisionPoint.
 	}
 }
 
