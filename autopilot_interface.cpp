@@ -2006,11 +2006,9 @@ CA_predict_thread()
 		}//End predict
 
 
-		//Wait a third of a second before updating the next position
-		usleep(333333);
+		//Wait a fourth of a second before updating the next position
+		usleep(250000);
 		//usleep(1000000);
-		
-
 	}
 
 	CA_status = false;
