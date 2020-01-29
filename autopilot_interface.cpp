@@ -2311,7 +2311,7 @@ relHdg(double currentHdg, double otherHdg)
 
 //currently only optimized for sidestep strategy
 predictedCollision 
-considerStrategy(predictedCollision collisionPoint, aircraftInfo & aircraftA, aircraftInfo & aircraftB, double headingA, double distA)
+considerStrategy(predictedCollision collisionPoint, aircraftInfo & aircraftA, aircraftInfo & aircraftB, double headingA, double distA, double altA, double velA)
 {
 	predictedCollision newCollision;
 	
@@ -2319,6 +2319,7 @@ considerStrategy(predictedCollision collisionPoint, aircraftInfo & aircraftA, ai
 				 cos(aircraftA.lat[0]) * sin(distA / Radius_E) * cos(headingA * TO_RADIANS));
 	double futureLonA = aircraftA.lon[0] + atan2(sin(headingA * TO_RADIANS) * sin(distA / RADIUS_E) * cos(aircraftA.lat[0]), 
 						     cos(distA / RADIUS_E) * sin(aircraftA.lat[0]) * sin(futureLatA));
+	double futureAltA = 
 	//seconds it takes for A to get to new point
 	float time = distA / sqrt(pow(aircraftA.velocityX[0], 2) + pow(aircraftA.velocityY[0], 2));
 	
@@ -2421,6 +2422,7 @@ CA_Avoid(aircraftInfo & aircraftA, aircraftInfo & aircraftB, predictedCollision 
 	//TrackEarly
 	
 	//Vertical
+	//consider safe altitude ranges(if plane is already too low or too high)
 	right = true;
 	count = 6;
 	avdLength = 0;
