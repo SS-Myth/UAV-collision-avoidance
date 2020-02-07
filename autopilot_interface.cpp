@@ -2321,12 +2321,14 @@ considerStrategy(predictedCollision collisionPoint, aircraftInfo & aircraftA, ai
 						     cos(distA / RADIUS_E) * sin(aircraftA.lat[0]) * sin(futureLatA));
 	double futureAltA = 
 	//seconds it takes for A to get to new point
+	//based off of current velocity(assuming no acceleration)
 	float time = distA / sqrt(pow(aircraftA.velocityX[0], 2) + pow(aircraftA.velocityY[0], 2));
 	
 	//iterative distance of future A and B points based on travel time and velocity
 	double distAIter;
 	double distBIter;
 	
+	//needs to be adjusted to test points along predicted curve instead of straight line, depending on movement of each aircraft
 	//iteratively determine if A and B intersect paths at the same time(creates new collision) at 1 sec intervals
 	for(float i = time, i > 0, i = i - 1.0f)
 	{
