@@ -1775,7 +1775,7 @@ insert_waypoint ( mavlink_mission_item_t &newWaypoint, uint16_t &desiredSeqNumbe
 
 void
 Autopilot_Interface::
-updateAircraftInfo(aircraftInfo &aircraftObj, mavlink_global_position_int_t gpos, mavlink_adsb_vehicle_t adsb, int plane)
+updateAircraftInfo(aircraftInfo & aircraftObj, mavlink_global_position_int_t gpos, mavlink_adsb_vehicle_t adsb, int plane)
 {
 
 	float groundSpeed;
@@ -1783,7 +1783,7 @@ updateAircraftInfo(aircraftInfo &aircraftObj, mavlink_global_position_int_t gpos
 	//Shift previous data backwards
 	aircraftObj.lat[2] = aircraftObj.lat[1];
 	aircraftObj.lon[2] = aircraftObj.lon[1];
-   aircraftObj.gpsTime[2] = aircraftObj.gpsTime[1];
+   	aircraftObj.gpsTime[2] = aircraftObj.gpsTime[1];
 	aircraftObj.lat[1] = aircraftObj.lat[0];
 	aircraftObj.lon[1] = aircraftObj.lon[0];
 	aircraftObj.gpsTime[1] = aircraftObj.gpsTime[0];
@@ -1794,11 +1794,13 @@ updateAircraftInfo(aircraftInfo &aircraftObj, mavlink_global_position_int_t gpos
 	aircraftObj.velocityY[1] = aircraftObj.velocityY[0];
 	aircraftObj.vTan[1]      = aircraftObj.vTan[0];
 
-	if (plane == 1) { //If working with the controlled plane, grab from internal
-		aircraftObj.lat[0] 		  = gpos.lat / 1E7;
-		aircraftObj.lon[0] 	     = gpos.lon / 1E7;
+	//If working with the controlled plane, grab from internal
+	if (plane == 1) 
+	{ 
+		aircraftObj.lat[0] = gpos.lat / 1E7;
+		aircraftObj.lon[0] = gpos.lon / 1E7;
 
-		aircraftObj.gpsTime[0]       = gpos.time_boot_ms;
+		aircraftObj.gpsTime[0] = gpos.time_boot_ms;
 
 		// Derive velocity and heading from distance vectors
 		mavlink_mission_item_t distVec = distanceVectors(aircraftObj.lat[0], aircraftObj.lon[0], aircraftObj.lat[1], aircraftObj.lon[1]);
@@ -1819,14 +1821,17 @@ updateAircraftInfo(aircraftInfo &aircraftObj, mavlink_global_position_int_t gpos
 		aircraftObj.Hdg[0]        = gpos.hdg / 100.0;
 */
 
-		aircraftObj.vTan[0]       = sqrt(pow(aircraftObj.velocityX[0],2) + pow(aircraftObj.velocityY[0], 2));
+		aircraftObj.vTan[0] = sqrt(pow(aircraftObj.velocityX[0],2) + pow(aircraftObj.velocityY[0], 2));
 
 		//printf("update gpos.lat: %f\n", gpos.lat/1E7);
 		//printf("update gpos.velx: %f\n", gpos.vx/100.0);
 		//printf("update gpos.vely: %f\n", gpos.vy/100.0);
 
 	}
-	else { // If working with other plane grab from ADS-B
+	
+	// else if working with other plane grab from ADS-B
+	else 
+	{ 
 		aircraftObj.lat[0] = adsb.lat / 1E7;
 		aircraftObj.lon[0] = adsb.lon / 1E7;
 
@@ -1836,7 +1841,7 @@ updateAircraftInfo(aircraftInfo &aircraftObj, mavlink_global_position_int_t gpos
 
 		aircraftObj.velocityX[0] = groundSpeed * cos(aircraftObj.Hdg[0] * TO_RADIANS);
 		aircraftObj.velocityY[0] = groundSpeed * sin(aircraftObj.Hdg[0] * TO_RADIANS);
-		aircraftObj.vTan[0]      = sqrt(pow(aircraftObj.velocityX[0],2) + pow(aircraftObj.velocityY[0], 2));
+		aircraftObj.vTan[0] = sqrt(pow(aircraftObj.velocityX[0],2) + pow(aircraftObj.velocityY[0], 2));
 		//printf("update adsb.lat: %f\n", adsb.lat/1E7);
 	}
 
@@ -1871,13 +1876,13 @@ CA_predict_thread()
 	bool otherUpdated = false;
 	int fractionSinceUpdate = 0;
 
-	while ( ! time_to_exit ) {
-
-	  ///---------------------------------
-      ///
-      /// Gather All Parameters for Our Plane, such as lat,lon,velocity,acceleration, Heading,
-      ///
-      ///----------------------------------
+	while ( ! time_to_exit ) 
+	{
+		///---------------------------------
+		///
+      		/// Gather All Parameters for Our Plane, such as lat,lon,velocity,acceleration, Heading,
+      		///
+      		///----------------------------------
 
 		//update stored messages
 		gpos = current_messages.global_position_int;
@@ -1891,17 +1896,39 @@ CA_predict_thread()
 		//printf("gpos lon %f\n", gpos.lon/1E7);
 
 		//Update check for the controlled aircraft
-		if ( fabs(ourAircraft.lat[0] - (double) gpos.lat/1E7) > 0.0000001 && fabs(ourAircraft.lon[0] - (double) gpos.lon/1E7) > 0.0000001 ) {
+		//If our position has changed then updateAircraftInfo(A)
+		if ( fabs(ourAircraft.lat[0] - (double) gpos.lat/1E7) > 0.0000001 || fabs(ourAircraft.lon[0] - (double) gpos.lon/1E7) > 0.0000001 ) 
+		{
 			updateAircraftInfo(ourAircraft, gpos, dummydataADSB, 1);
 
 			//Now that we have updated the position, lets inform the other functions
 			ourUpdated = true;
-		
 		}
 
-
+		//If other position has changed we received new info from adsb; updateAircraftInfo(B)
+		if ( fabs(otherAircraft.lat[0] - (double) adsb.lat/1E7) > 0.000001 || fabs(otherAircraft.lon[0] - (double) adsb.lon/1E7) > 0.000001 )
+		{
+			//Update other aircraft
+			updateAircraftInfo(otherAircraft, gpos, adsb, 2);
+			
+			//Now that we have updated the position, lets inform the other functions
+			otherUpdated = true;
+			fractionSinceUpdate = 0;
+			//printf("logged!\n");
+		}
+		
+		//If other position has not changed but speed = 0; It is hovering
+		else if(adsb.hor_velocity == 0)
+		{
+			updateAircraftInfo(otherAircraft, gpos, adsb, 2);
+			otherUpdated = true;
+			fractionSinceUpdate = 0;
+		}
+		
+		//Else we have not received new info from adsb; disregard sample data
 		//If the position has not been updated in the current messages then start counting
-		if ( fabs(otherAircraft.lat[0] - (double) adsb.lat/1E7) < 0.00001 && fabs(otherAircraft.lon[0] - (double) adsb.lon/1E7) < 0.00001)  {
+		if ( fabs(otherAircraft.lat[0] - (double) adsb.lat/1E7) < 0.00001 && fabs(otherAircraft.lon[0] - (double) adsb.lon/1E7) < 0.00001)  
+		{
 			fractionSinceUpdate++; //Time = .3333*fractionSinceUpdate 
 		}
 		
@@ -1911,28 +1938,22 @@ CA_predict_thread()
 		//printf("adsb lat  %f\n",adsb.lat/1E7);
 		//printf("adsb lon  %f\n",adsb.lon/1E7);
 		
-		if ( fabs(otherAircraft.lat[0] - (double) adsb.lat/1E7) > 0.000001 || fabs(otherAircraft.lon[0] - (double) adsb.lon/1E7) > 0.000001 ){
-			//Update other aircraft
-			updateAircraftInfo(otherAircraft, gpos, adsb, 2);
-			
-			//Now that we have updated the position, lets inform the other functions
-			otherUpdated = true;
-			fractionSinceUpdate = 0;
-			//printf("logged!\n");
-		}
-
+		
 		//printf("log criteria dist: %lf\n",(double) abs(otherAircraft.lat[0] - (double) adsb.lat/1E7));
-		if ( fractionSinceUpdate > 9 ) { //Get rid of zeros in otherAircraft vector[2]
+		/*if ( fractionSinceUpdate > 9 ) 
+		{ 
+			//Get rid of zeros in otherAircraft vector[2]
 			updateAircraftInfo(otherAircraft, dummydataGPOS, adsb, 2);
-		}
+		}*/
 
 
 		//printf("Time since update: %i\n",fractionSinceUpdate);
 		//printf("Ours updated? %d\nOther updated? %d\n", ourUpdated, otherUpdated);
 		//printf("First condition satisfied: %d\n Second condition satisfied: %d\n",(ourUpdated && otherUpdated), (fractionSinceUpdate > 9 && ourUpdated == true));
 
-		//Predict now happens if both the ownships and the other aircraft's position has changed. Or it has been more than 3 seconds
-		if ((ourUpdated == true && otherUpdated == true) || (fractionSinceUpdate > 9 && ourUpdated == true )) { /*9 is 3 seconds since update speed is 1/3 of a second*/
+		//Predict now happens if both the ownships and the other aircraft have updated
+		if ((ourUpdated == true && otherUpdated == true)) 
+		{ /*9 is 3 seconds since update speed is 1/3 of a second*/
 				
 
 			//printf("1/3 seconds since ADS-B update: %i", fractionSinceUpdate);
@@ -1956,7 +1977,7 @@ CA_predict_thread()
 			//printf("Done Logging\n");
 
 			//printf("\nPREDICT\n");			//Predict using the logged point
-			collision = CA_Predict(ourAircraft, otherAircraft);
+			collision = CA_Predict(ourAircraft, otherAircraft, ourAircraft.Hdg[0]);
 			//collision.collisionDetected == true;
 			
 			printf("Collision predicted? %d\n", collision.collisionDetected);
@@ -1985,11 +2006,9 @@ CA_predict_thread()
 		}//End predict
 
 
-		//Wait a third of a second before updating the next position
-		usleep(333333);
+		//Wait a fourth of a second before updating the next position
+		usleep(250000);
 		//usleep(1000000);
-		
-
 	}
 
 	CA_status = false;
@@ -2030,10 +2049,10 @@ return distVec;
 
 predictedCollision
 Autopilot_Interface::
-CA_Predict(aircraftInfo &aircraftA, aircraftInfo &aircraftB) 
+CA_Predict(aircraftInfo & aircraftA, aircraftInfo & aircraftB)
 {
 	float fps = 10.0; //fps meaning future points
-	double  rH; // for relative Heading of the planes
+	double rH; // for relative Heading of the planes
 	float t;
 	double accDirA;
 	double accDirB;
@@ -2061,10 +2080,16 @@ CA_Predict(aircraftInfo &aircraftA, aircraftInfo &aircraftB)
 	// Set up equations of predicted motion for both aircraft
 	//-----------------------------------------------------------------------------
 	
-   	aircraftA.Hdg[0] = atan2(aircraftA.velocityY[0], aircraftA.velocityX[0]) * 180.0/3.1415;
+	//convert aircraft heading to degrees
+	aircraftA.Hdg[0] = aircraftA.Hdg[0] * 180 / 3.1415;
+	aircraftA.Hdg[1] = aircraftA.Hdg[1] * 180 / 3.1415;
+	aircraftB.Hdg[0] = aircraftB.Hdg[0] * 180 / 3.1415;
+	aircraftB.Hdg[1] = aircraftB.Hdg[1] * 180 / 3.1415;
+	
+   	/*aircraftA.Hdg[0] = atan2(aircraftA.velocityY[0], aircraftA.velocityX[0]) * 180.0/3.1415;
    	aircraftA.Hdg[1] = atan2(aircraftA.velocityY[1], aircraftA.velocityX[1]) * 180.0/3.1415;
    	aircraftB.Hdg[0] = atan2(aircraftB.velocityY[0], aircraftB.velocityX[0]) * 180.0/3.1415;
-   	aircraftB.Hdg[1] = atan2(aircraftB.velocityY[1], aircraftB.velocityX[1]) * 180.0/3.1415;
+   	aircraftB.Hdg[1] = atan2(aircraftB.velocityY[1], aircraftB.velocityX[1]) * 180.0/3.1415;*/
 
 	if (aircraftA.Hdg[0] > aircraftA.Hdg[1])
 		accDirA = aircraftA.Hdg[0] + 90.0;
@@ -2145,8 +2170,8 @@ CA_Predict(aircraftInfo &aircraftA, aircraftInfo &aircraftB)
 	//printf("RvCA[1] %f\n", RvCA[1]);
 
 	// Find magnitude of angular rotation (rad/s)
-	omegaA = aircraftA.vTan[0]/RmagA;
-	omegaB = aircraftB.vTan[0]/RmagB;
+	omegaA = aircraftA.vTan[0] / RmagA;
+	omegaB = aircraftB.vTan[0] / RmagB;
 	if (fabs(RmagA) < 0.0001) 
 		omegaA = 0.0;
 	if (fabs(RmagB) < 0.0001) 
@@ -2175,6 +2200,9 @@ CA_Predict(aircraftInfo &aircraftA, aircraftInfo &aircraftB)
 	float RvecB_i [2];
 	float RpredictB [2];
 	float RpredictA [2];
+	int bubbleRadius;
+	double predictedDistance;
+	double futureHdgB;
 
 	for (t = 0.0; t < fps; t=t+1.0)
 	{
@@ -2182,8 +2210,8 @@ CA_Predict(aircraftInfo &aircraftA, aircraftInfo &aircraftB)
 		//---------------------------------------------------------------------------------------------------------
 		//	Predict future positions
 		//---------------------------------------------------------------------------------------------------------
-		thetaA_i = (accDirA+180.0) * TO_RADIANS + omegaA*t;
-		thetaB_i = (accDirB+180.0) * TO_RADIANS + omegaB*t;
+		thetaA_i = (accDirA+180.0) * TO_RADIANS + omegaA * t;
+		thetaB_i = (accDirB+180.0) * TO_RADIANS + omegaB * t;
 		//printf("thetaA_i %f\n", thetaA_i);
 
 		// Vector from center of rotation to new predicted position
@@ -2203,6 +2231,9 @@ CA_Predict(aircraftInfo &aircraftA, aircraftInfo &aircraftB)
 		
 		//printf("RpredictA[0] %f\n", RpredictA[0]);
 		//printf("RpredictA[1] %f\n", RpredictA[1]);
+		
+		//determine the heading of B at the predicted location
+		futureHdgB = 90 + (270 - (aircraftB.Hdg[0] + thetaB_i * 180 / 3.1415));
 
 		//Creates a future position item based on the current position and future distance
 		mavlink_mission_item_t ourFuturePos = NewAvoidWaypoint(RpredictA[0], RpredictA[1], aircraftA);
@@ -2225,8 +2256,8 @@ CA_Predict(aircraftInfo &aircraftA, aircraftInfo &aircraftB)
 		//
 		//----------------------------------------------------------------------------------------------
 
-		int bubbleRadius = aircraftA.safetyBubble;
-		double predictedDistance = gpsDistance(ourFuturePos.x, ourFuturePos.y, otherFuturePos.x, otherFuturePos.y);
+		bubbleRadius = aircraftA.safetyBubble;
+		predictedDistance = gpsDistance(ourFuturePos.x, ourFuturePos.y, otherFuturePos.x, otherFuturePos.y);
 
 		//Log
 		addToFile(convertToString(predictedDistance), "Future predicted distance");
@@ -2234,11 +2265,18 @@ CA_Predict(aircraftInfo &aircraftA, aircraftInfo &aircraftB)
 		collisionPoint.collisionDetected = false;
 
 		//	printf("NEED TO CHANGE: Collision detected if predicted distance <=1\n");
-		if (predictedDistance <= bubbleRadius) { //MODIFIED FOR LOGGING PURPOSES!!! NOT OFFICIAL CODE
+		if (predictedDistance <= bubbleRadius) 
+		{ 
+			//MODIFIED FOR LOGGING PURPOSES!!! NOT OFFICIAL CODE
 
 			collisionPoint.collisionDetected = true;
 			collisionPoint.timeToCollision = t;
 			collisionPoint.relativeHeading = rH;
+			collisionPoint.headingB = futureHdgB;
+			collisionPoint.locationA.x = ourFuturePos.x;
+			collisionPoint.locationA.y = ourFuturePos.y;
+			collisionPoint.locationB.x = otherFuturePos.x;
+			collisionPoint.locationB.y = otherFuturePos.y;
 			
 			//printf("Collision detected\n");
 			addToFile("COLLISION DETECTED", "");
@@ -2271,10 +2309,53 @@ relHdg(double currentHdg, double otherHdg)
 	return relativeHdg;
 }
 
+//currently only optimized for sidestep strategy
+predictedCollision 
+considerStrategy(predictedCollision collisionPoint, aircraftInfo & aircraftA, aircraftInfo & aircraftB, double headingA, double distA, double altA, double velA)
+{
+	predictedCollision newCollision;
+	
+	double futureLatA = asin(sin(aircraftA.lat[0]) * cos(distA / Radius_E) +
+				 cos(aircraftA.lat[0]) * sin(distA / Radius_E) * cos(headingA * TO_RADIANS));
+	double futureLonA = aircraftA.lon[0] + atan2(sin(headingA * TO_RADIANS) * sin(distA / RADIUS_E) * cos(aircraftA.lat[0]), 
+						     cos(distA / RADIUS_E) * sin(aircraftA.lat[0]) * sin(futureLatA));
+	double futureAltA = 
+	//seconds it takes for A to get to new point
+	//based off of current velocity(assuming no acceleration)
+	float time = distA / sqrt(pow(aircraftA.velocityX[0], 2) + pow(aircraftA.velocityY[0], 2));
+	
+	//iterative distance of future A and B points based on travel time and velocity
+	double distAIter;
+	double distBIter;
+	
+	//needs to be adjusted to test points along predicted curve instead of straight line, depending on movement of each aircraft
+	//iteratively determine if A and B intersect paths at the same time(creates new collision) at 1 sec intervals
+	for(float i = time, i > 0, i = i - 1.0f)
+	{
+		//predicted location of A at i seconds in the future
+		distAIter = i * sqrt(pow(aircraftA.velocityX[0], 2) + pow(aircraftA.velocityY[0], 2));
+		futureLatA = asin(sin(aircraftA.lat[0]) * cos(distAIter / RADIUS_E) +
+				 cos(aircraftA.lat[0]) * sin(distAIter / RADIUS_E) * cos(headingA * TO_RADIANS));
+		futureLonA = aircraftA.lon[0] + atan2(sin(headingA * TO_RADIANS) * sin(distAIter / RADIUS_E) * cos(aircraftA.lat[0]), 
+						     cos(distAIter / RADIUS_E) * sin(aircraftA.lat[0]) * sin(futureLatA));
+		//predicted location of B at i seconds in the future
+		distBIter = i * sqrt(pow(aircraftB.velocityX[0], 2), aircraftB.velocityY[0], 2));
+		futureLatB = asin(sin(aircraftB.lat[0]) * cos(distBIter / Radius_E) + 
+				  cos(aircraftB.lat[0]) * sin(distBIter / Radius_E) * cos(collisionPoint.headingB * TO_RADIANS));
+		futureLonB = aircraftB.lon[0] + atan2(sin(collisionPoint.headingB * TO_RADIANS) * sin(distBIter / RADIUS_E) * cos(aircraftB.lat[0]),
+						      cos(distBIter / RADIUS_E) * sin(aircraftB.lat[0]) * sin(futureLatB));
+		
+		if(gpsDistance(futureLatA, futureLonA, futureLatB, futureLonB) <= aircraftA.safetyBubble)
+		{
+			newCollision.collisionDetected = true;
+		}
+	}
+	return newCollision;
+}
 
 void 
 Autopilot_Interface::
-CA_Avoid( aircraftInfo &aircraftA, aircraftInfo &aircraftB, predictedCollision &collision)
+CA_Avoid(aircraftInfo & aircraftA, aircraftInfo & aircraftB, predictedCollision & collision)
 {
 	double missDist = 75; //Meters
 	double turnRadius = 50; //Meters
@@ -2291,7 +2372,6 @@ CA_Avoid( aircraftInfo &aircraftA, aircraftInfo &aircraftB, predictedCollision &
     	double lonB = aircraftB.lon[0];
     	uint64_t buffB = aircraftB.safetyBubble;
 
-
 	//Define more variables
 	double distMag;
 	double distHdg;
@@ -2299,13 +2379,88 @@ CA_Avoid( aircraftInfo &aircraftA, aircraftInfo &aircraftB, predictedCollision &
 	double avdDist;
 	double avdHdg;
 	//double targetHdg
-	//double addHdg
+	
+	double collisionDist;
+	double avdAlt;
+	uint64_t avdLength;
+	
+	int count;
+	bool right;
 
      	double relativeHdg = relHdg(aircraftA.Hdg[0], aircraftB.Hdg[0]);
 	addToFile(convertToString(relativeHdg), "Relative Heading");
+	
+	//Sidestep
+	right = true;
+	count = 6;
+	avdLength = 0;
+	while(collision.collisionDetected && count > 0)
+	{
+		collisionDist = sqrt(pow((collision.locationA.x - aircraftA.lat[0]), 2) + pow((collision.locationA.y - aircraftA.lon[0]), 2));
+		
+		if(right)
+		{
+			avdLength += (2 * buffA); //could change to single radius increments to make less severe manuever
+			addHdg = atan(avdLength / collisionDist);
+		}
+		else
+			addHdg = -atan(avdLength / collisionDist);
+		
+		avdHdg = aircraftA.Hdg[0] + addHdg;
+		avdDist = sqrt(pow(collisionDist, 2) + pow(avdLength, 2));
+		
+		collision = considerStrategy(collision, aircraftA, aircraftB, avdHdg, avdDist);
+		//if new collision detected continue loop
+		//else loop will end and current values committed to waypoint
+		if(collision.collisionDetected == false)
+		{
+			
+		}
+		
+		right = !right;
+		count--;
+	}
+	
+	//TrackEarly
+	
+	//Vertical
+	//consider safe altitude ranges(if plane is already too low or too high)
+	right = true;
+	count = 6;
+	avdLength = 0;
+	while(collision.collisionDetected && count > 0)
+	{
+		collisionDist = sqrt(pow((collision.location.x - aircraftA.lat[0]), 2) + pow((collision.location.y - aircraftA.lon[0]), 2));
+		
+		if(right)
+		{
+			avdLength += (2 * buffA);
+			avdAlt = aircraftA.alt[0] + avdLength;
+		}
+		else
+			avdAlt = aircraftA.alt[0] - avdLength;
+		
+		//if new collision detected continue loop
+		//else loop will end and current values committed to waypoint
+		
+		up = !up;
+		count--;
+	}
+	
+	//Speed
+	right = true;
+	count = 6;
+	while(collision.collision.collisionDetected && count > 0)
+	{
+		collisionDist = sqrt(pow((collision.location.x - aircraftA.lat[0]), 2) + pow((collision.location.y - aircraftA.lon[0]), 2));
+		
+		if(right)
+		{
+		}
+	}
 
 	//Avoid if other aircraft is approaching from the side
-    	if ( fabs(relativeHdg) > 30.0 && fabs(relativeHdg) < 150.0)
+    	if (fabs(relativeHdg) > 30.0 && fabs(relativeHdg) < 150.0)
 	{
 		mavlink_mission_item_t distVec = distanceVectors(aircraftB.lat[0], aircraftB.lon[0], aircraftA.lat[0], aircraftA.lon[0]);
     		distMag = sqrt( pow((distVec.x),2) + pow(distVec.y, 2));
