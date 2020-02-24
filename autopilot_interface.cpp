@@ -2390,6 +2390,8 @@ CA_Avoid(aircraftInfo & aircraftA, aircraftInfo & aircraftB, predictedCollision 
      	double relativeHdg = relHdg(aircraftA.Hdg[0], aircraftB.Hdg[0]);
 	addToFile(convertToString(relativeHdg), "Relative Heading");
 	
+	//consider method of calculating cost of each strategy for improved path optimization
+	
 	//Sidestep
 	right = true;
 	count = 6;
@@ -2410,12 +2412,9 @@ CA_Avoid(aircraftInfo & aircraftA, aircraftInfo & aircraftB, predictedCollision 
 		avdDist = sqrt(pow(collisionDist, 2) + pow(avdLength, 2));
 		
 		collision = considerStrategy(collision, aircraftA, aircraftB, avdHdg, avdDist);
-		//if new collision detected continue loop
-		//else loop will end and current values committed to waypoint
-		if(collision.collisionDetected == false)
-		{
-			
-		}
+		
+		//while collision is detected loop will continue
+		//else loop will end and further strategies ignored
 		
 		right = !right;
 		count--;
