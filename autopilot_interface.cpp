@@ -2339,7 +2339,7 @@ considerStrategy(predictedCollision collisionPoint, aircraftInfo & aircraftA, ai
 		futureLonA = aircraftA.lon[0] + atan2(sin(headingA * TO_RADIANS) * sin(distAIter / RADIUS_E) * cos(aircraftA.lat[0]), 
 						     cos(distAIter / RADIUS_E) * sin(aircraftA.lat[0]) * sin(futureLatA));
 		//predicted location of B at i seconds in the future
-		distBIter = i * sqrt(pow(aircraftB.velocityX[0], 2), aircraftB.velocityY[0], 2));
+		distBIter = i * sqrt(pow(aircraftB.velocityX[0], 2), pow(aircraftB.velocityY[0], 2));
 		futureLatB = asin(sin(aircraftB.lat[0]) * cos(distBIter / Radius_E) + 
 				  cos(aircraftB.lat[0]) * sin(distBIter / Radius_E) * cos(collisionPoint.headingB * TO_RADIANS));
 		futureLonB = aircraftB.lon[0] + atan2(sin(collisionPoint.headingB * TO_RADIANS) * sin(distBIter / RADIUS_E) * cos(aircraftB.lat[0]),
