@@ -388,7 +388,7 @@ struct aircraftInfo {
 
 struct predictedCollision 
 {	
-	float timeToCollision;
+	float timeToCollision; //in seconds
 	bool collisionDetected;
 	float relativeHeading;
 	double headingB;
