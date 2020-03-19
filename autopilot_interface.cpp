@@ -2051,7 +2051,7 @@ predictedCollision
 Autopilot_Interface::
 CA_Predict(aircraftInfo & aircraftA, aircraftInfo & aircraftB)
 {
-	float fps = 10.0; //fps meaning future points
+	float fps = 15.0; //fps meaning future points
 	double rH; // for relative Heading of the planes
 	float t;
 	double accDirA;
@@ -2272,7 +2272,7 @@ CA_Predict(aircraftInfo & aircraftA, aircraftInfo & aircraftB)
 			collisionPoint.collisionDetected = true;
 			collisionPoint.timeToCollision = t;
 			collisionPoint.relativeHeading = rH;
-			collisionPoint.headingB = futureHdgB;
+			collisionPoint.headingB = futureHdgB; //may change
 			collisionPoint.locationA.x = ourFuturePos.x;
 			collisionPoint.locationA.y = ourFuturePos.y;
 			collisionPoint.locationB.x = otherFuturePos.x;
@@ -2315,10 +2315,10 @@ considerStrategy(predictedCollision collisionPoint, aircraftInfo & aircraftA, ai
 {
 	predictedCollision newCollision;
 	
-	double futureLatA = asin(sin(aircraftA.lat[0]) * cos(distA / Radius_E) +
-				 cos(aircraftA.lat[0]) * sin(distA / Radius_E) * cos(headingA * TO_RADIANS));
-	double futureLonA = aircraftA.lon[0] + atan2(sin(headingA * TO_RADIANS) * sin(distA / RADIUS_E) * cos(aircraftA.lat[0]), 
-						     cos(distA / RADIUS_E) * sin(aircraftA.lat[0]) * sin(futureLatA));
+	double futureLatA = asin(sin(aircraftA.lat[0]) * cos(distA / RADIUS_EARTH) +
+				 cos(aircraftA.lat[0]) * sin(distA / RADIUS_EARTH) * cos(headingA * TO_RADIANS));
+	double futureLonA = aircraftA.lon[0] + atan2(sin(headingA * TO_RADIANS) * sin(distA / RADIUS_EARTH) * cos(aircraftA.lat[0]), 
+						     cos(distA / RADIUS_EARTH) * sin(aircraftA.lat[0]) * sin(futureLatA));
 	double futureAltA = 
 	//seconds it takes for A to get to new point
 	//based off of current velocity(assuming no acceleration)
@@ -2334,16 +2334,16 @@ considerStrategy(predictedCollision collisionPoint, aircraftInfo & aircraftA, ai
 	{
 		//predicted location of A at i seconds in the future
 		distAIter = i * sqrt(pow(aircraftA.velocityX[0], 2) + pow(aircraftA.velocityY[0], 2));
-		futureLatA = asin(sin(aircraftA.lat[0]) * cos(distAIter / RADIUS_E) +
-				 cos(aircraftA.lat[0]) * sin(distAIter / RADIUS_E) * cos(headingA * TO_RADIANS));
-		futureLonA = aircraftA.lon[0] + atan2(sin(headingA * TO_RADIANS) * sin(distAIter / RADIUS_E) * cos(aircraftA.lat[0]), 
-						     cos(distAIter / RADIUS_E) * sin(aircraftA.lat[0]) * sin(futureLatA));
+		futureLatA = asin(sin(aircraftA.lat[0]) * cos(distAIter / RADIUS_EARTH) +
+				 cos(aircraftA.lat[0]) * sin(distAIter / RADIUS_EARTH) * cos(headingA * TO_RADIANS));
+		futureLonA = aircraftA.lon[0] + atan2(sin(headingA * TO_RADIANS) * sin(distAIter / RADIUS_EARTH) * cos(aircraftA.lat[0]), 
+						     cos(distAIter / RADIUS_EARTH) * sin(aircraftA.lat[0]) * sin(futureLatA));
 		//predicted location of B at i seconds in the future
-		distBIter = i * sqrt(pow(aircraftB.velocityX[0], 2), pow(aircraftB.velocityY[0], 2));
-		futureLatB = asin(sin(aircraftB.lat[0]) * cos(distBIter / Radius_E) + 
-				  cos(aircraftB.lat[0]) * sin(distBIter / Radius_E) * cos(collisionPoint.headingB * TO_RADIANS));
-		futureLonB = aircraftB.lon[0] + atan2(sin(collisionPoint.headingB * TO_RADIANS) * sin(distBIter / RADIUS_E) * cos(aircraftB.lat[0]),
-						      cos(distBIter / RADIUS_E) * sin(aircraftB.lat[0]) * sin(futureLatB));
+		distBIter = i * sqrt(pow(aircraftB.velocityX[0], 2) + pow(aircraftB.velocityY[0], 2));
+		futureLatB = asin(sin(aircraftB.lat[0]) * cos(distBIter / RADIUS_EARTH) + 
+				  cos(aircraftB.lat[0]) * sin(distBIter / RADIUS_EARTH) * cos(collisionPoint.headingB * TO_RADIANS));
+		futureLonB = aircraftB.lon[0] + atan2(sin(collisionPoint.headingB * TO_RADIANS) * sin(distBIter / RADIUS_EARTH) * cos(aircraftB.lat[0]),
+						      cos(distBIter / RADIUS_EARTH) * sin(aircraftB.lat[0]) * sin(futureLatB));
 		
 		if(gpsDistance(futureLatA, futureLonA, futureLatB, futureLonB) <= aircraftA.safetyBubble)
 		{
@@ -2380,7 +2380,7 @@ CA_Avoid(aircraftInfo & aircraftA, aircraftInfo & aircraftB, predictedCollision 
 	double avdHdg;
 	//double targetHdg
 	
-	double collisionDist;
+	double collisionDist = sqrt(pow((collision.locationA.x - aircraftA.lat[0]), 2) + pow((collision.locationA.y - aircraftA.lon[0]), 2));
 	double avdAlt;
 	uint64_t avdLength;
 	
@@ -2398,8 +2398,6 @@ CA_Avoid(aircraftInfo & aircraftA, aircraftInfo & aircraftB, predictedCollision 
 	avdLength = 0;
 	while(collision.collisionDetected && count > 0)
 	{
-		collisionDist = sqrt(pow((collision.locationA.x - aircraftA.lat[0]), 2) + pow((collision.locationA.y - aircraftA.lon[0]), 2));
-		
 		if(right)
 		{
 			avdLength += (2 * buffA); //could change to single radius increments to make less severe manuever
@@ -2429,8 +2427,6 @@ CA_Avoid(aircraftInfo & aircraftA, aircraftInfo & aircraftB, predictedCollision 
 	avdLength = 0;
 	while(collision.collisionDetected && count > 0)
 	{
-		collisionDist = sqrt(pow((collision.location.x - aircraftA.lat[0]), 2) + pow((collision.location.y - aircraftA.lon[0]), 2));
-		
 		if(right)
 		{
 			avdLength += (2 * buffA);
