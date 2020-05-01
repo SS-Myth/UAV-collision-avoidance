@@ -2275,7 +2275,7 @@ CA_Predict(aircraftInfo & aircraftA, aircraftInfo & aircraftB)
 			collisionPoint.collisionDetected = true;
 			collisionPoint.timeToCollision = t;
 			collisionPoint.distance = collisionDist;
-			collisionPoint.angle = 90 - acos(collisionDist / (2*RmagA)); //angle between current A heading and heading towards collision
+			collisionPoint.angle = 90 - acos(collisionDist / (2*RmagA)); //angle between current A heading and heading towards collision (theta)
 			collisionPoint.relativeHeading = rH;
 			collisionPoint.headingB = futureHdgB; //may change
 			collisionPoint.locationA.x = ourFuturePos.x;
@@ -2362,8 +2362,8 @@ void
 Autopilot_Interface::
 CA_Avoid(aircraftInfo & aircraftA, aircraftInfo & aircraftB, predictedCollision & collision)
 {
-	double missDist = 75; //Meters
-	double turnRadius = 50; //Meters
+	//double missDist = 75; //Meters
+	//double turnRadius = 50; //Meters
 	double avoidVec[2] = {0};
 	//Stores waypoints in Current_Waypoints
     	Request_Waypoints();
@@ -2384,20 +2384,20 @@ CA_Avoid(aircraftInfo & aircraftA, aircraftInfo & aircraftB, predictedCollision 
 	double avdDist;
 	double avdHdg;
 	
-	double collisionDist = sqrt(pow((collision.locationA.x - aircraftA.lat[0]), 2) + pow((collision.locationA.y - aircraftA.lon[0]), 2));
-	double colAng;
+	//double collisionDist = sqrt(pow((collision.locationA.x - aircraftA.lat[0]), 2) + pow((collision.locationA.y - aircraftA.lon[0]), 2));
 	double avdAlt;
-	uint64_t avdLength;
+	double avdAng; //angle increment between collision point and avoid point(A)
 	
 	int count;
 	bool right;
 
-     	double relativeHdg = relHdg(aircraftA.Hdg[0], aircraftB.Hdg[0]);
-	addToFile(convertToString(relativeHdg), "Relative Heading");
+     	//double relativeHdg = relHdg(aircraftA.Hdg[0], aircraftB.Hdg[0]);
+	//addToFile(convertToString(relativeHdg), "Relative Heading");
 	
 	//consider method of calculating cost of each strategy for improved path optimization
 	
 	//Sidestep
+	avdAng = 2 * asin(aircraftA.safetyBubble / collision.distance);
 	right = true;
 	count = 6;
 	avdLength = 0;
