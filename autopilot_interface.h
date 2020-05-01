@@ -390,6 +390,8 @@ struct predictedCollision
 {	
 	float timeToCollision; //in seconds
 	bool collisionDetected;
+	double distance; //distance between current A loc and A at time of collision loc
+	
 	float relativeHeading;
 	double headingB;
 	
