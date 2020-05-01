@@ -2075,6 +2075,8 @@ CA_Predict(aircraftInfo & aircraftA, aircraftInfo & aircraftB)
 
 	double RvCA [2];
 	double RvCB [2];
+	
+	double collisionDist;
 
 	//-----------------------------------------------------------------------------
 	// Set up equations of predicted motion for both aircraft
@@ -2258,7 +2260,8 @@ CA_Predict(aircraftInfo & aircraftA, aircraftInfo & aircraftB)
 
 		bubbleRadius = aircraftA.safetyBubble;
 		predictedDistance = gpsDistance(ourFuturePos.x, ourFuturePos.y, otherFuturePos.x, otherFuturePos.y);
-
+		collisionDist = sqrt(pow((ourFuturePos.x - aircraftA.lat[0]), 2) + pow((ourFuturePos.y - aircraftA.lon[0]), 2)); //distance between current A loc and A loc at time of collision
+		
 		//Log
 		addToFile(convertToString(predictedDistance), "Future predicted distance");
 		//printf("Predicted distance between planes: %f m\n", predictedDistance);
@@ -2271,6 +2274,8 @@ CA_Predict(aircraftInfo & aircraftA, aircraftInfo & aircraftB)
 
 			collisionPoint.collisionDetected = true;
 			collisionPoint.timeToCollision = t;
+			collisionPoint.distance = collisionDist;
+			collisionPoint.angle = 90 - acos(collisionDist / (2*RmagA)); //angle between current A heading and heading towards collision
 			collisionPoint.relativeHeading = rH;
 			collisionPoint.headingB = futureHdgB; //may change
 			collisionPoint.locationA.x = ourFuturePos.x;
@@ -2378,9 +2383,9 @@ CA_Avoid(aircraftInfo & aircraftA, aircraftInfo & aircraftB, predictedCollision 
 	double addHdg;
 	double avdDist;
 	double avdHdg;
-	//double targetHdg
 	
 	double collisionDist = sqrt(pow((collision.locationA.x - aircraftA.lat[0]), 2) + pow((collision.locationA.y - aircraftA.lon[0]), 2));
+	double colAng;
 	double avdAlt;
 	uint64_t avdLength;
 	
@@ -2400,7 +2405,6 @@ CA_Avoid(aircraftInfo & aircraftA, aircraftInfo & aircraftB, predictedCollision 
 	{
 		if(right)
 		{
-			avdLength += (2 * buffA); //could change to single radius increments to make less severe manuever
 			addHdg = atan(avdLength / collisionDist);
 		}
 		else
