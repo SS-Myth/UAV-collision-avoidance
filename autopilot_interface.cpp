@@ -2275,7 +2275,9 @@ CA_Predict(aircraftInfo & aircraftA, aircraftInfo & aircraftB)
 			collisionPoint.collisionDetected = true;
 			collisionPoint.timeToCollision = t;
 			collisionPoint.distance = collisionDist;
-			collisionPoint.angle = 90 - acos(collisionDist / (2*RmagA)); //angle between current A heading and heading towards collision (theta)
+			collisionPoint.angle = 90 - acos(collisionDist / (2*RmagA)); //angle between current A heading and collision point (theta)
+			if (aircraftA.Hdg[0] < aircraftA.Hdg[1])
+				collisionPoint.angle = -1 * collisionPoint.angle; //if plane turning left, theta is negative
 			collisionPoint.relativeHeading = rH;
 			collisionPoint.headingB = futureHdgB; //may change
 			collisionPoint.locationA.x = ourFuturePos.x;
@@ -2316,9 +2318,10 @@ relHdg(double currentHdg, double otherHdg)
 
 //currently only optimized for sidestep strategy
 predictedCollision 
-considerStrategy(predictedCollision collisionPoint, aircraftInfo & aircraftA, aircraftInfo & aircraftB, double headingA, double distA, double altA, double velA)
+considerStrategy(predictedCollision collisionPoint, aircraftInfo & aircraftA, aircraftInfo & aircraftB, double headingA, double altA, double velA)
 {
 	predictedCollision newCollision;
+	double distA = collisionPoint.distance;
 	
 	double futureLatA = asin(sin(aircraftA.lat[0]) * cos(distA / RADIUS_EARTH) +
 				 cos(aircraftA.lat[0]) * sin(distA / RADIUS_EARTH) * cos(headingA * TO_RADIANS));
@@ -2382,11 +2385,11 @@ CA_Avoid(aircraftInfo & aircraftA, aircraftInfo & aircraftB, predictedCollision 
 	double distHdg;
 	double addHdg;
 	double avdDist;
-	double avdHdg;
+	double avdHdg; //target heading of aircraft A to avoid collision
 	
 	//double collisionDist = sqrt(pow((collision.locationA.x - aircraftA.lat[0]), 2) + pow((collision.locationA.y - aircraftA.lon[0]), 2));
 	double avdAlt;
-	double avdAng; //angle increment between collision point and avoid point(A)
+	double avdAng; //angle increment between collision point and avoid point (A)
 	
 	int count;
 	bool right;
@@ -2397,7 +2400,6 @@ CA_Avoid(aircraftInfo & aircraftA, aircraftInfo & aircraftB, predictedCollision 
 	//consider method of calculating cost of each strategy for improved path optimization
 	
 	//Sidestep
-	avdAng = 2 * asin(aircraftA.safetyBubble / collision.distance);
 	right = true;
 	count = 6;
 	avdLength = 0;
@@ -2405,15 +2407,15 @@ CA_Avoid(aircraftInfo & aircraftA, aircraftInfo & aircraftB, predictedCollision 
 	{
 		if(right)
 		{
-			addHdg = atan(avdLength / collisionDist);
+			avdAng = 2 * asin(aircraftA.safetyBubble / collision.distance);
 		}
 		else
-			addHdg = -atan(avdLength / collisionDist);
+			avdAng = -1 * (2 * asin(aircraftA.safetyBubble / collision.distance));
 		
-		avdHdg = aircraftA.Hdg[0] + addHdg;
-		avdDist = sqrt(pow(collisionDist, 2) + pow(avdLength, 2));
+		avdHdg = aircraftA.Hdg[0] + collision.angle + avdAng;
+		//avdDist = sqrt(pow(collisionDist, 2) + pow(avdLength, 2));
 		
-		collision = considerStrategy(collision, aircraftA, aircraftB, avdHdg, avdDist);
+		collision = considerStrategy(collision, aircraftA, aircraftB, avdHdg);
 		
 		//while collision is detected loop will continue
 		//else loop will end and further strategies ignored
@@ -2519,7 +2521,7 @@ CA_Avoid(aircraftInfo & aircraftA, aircraftInfo & aircraftB, predictedCollision 
     	//avoidWaypoint.z = currentMission[endVal].z;
 
 	printf("avoidVex x,y: %f, %f\n", avoidVec[0], avoidVec[1]);
-	avoidWaypoint = NewAvoidWaypoint(avoidVec[0], avoidVec[1], aircraftA);
+	avoidWaypoint = NewAvoidWaypoint(avoidVec[1], avoidVec[0], avoidrcraftA);
 	printf("avoidWaypoint.x after: %f\n", avoidWaypoint.x);
 	printf("avoidWaypoint.x %f , y: %f\n", avoidWaypoint.x, avoidWaypoint.y);
 	printf("avoidVex x,y: %f, %f\n", avoidVec[0], avoidVec[1]);
