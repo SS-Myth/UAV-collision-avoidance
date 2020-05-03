@@ -391,6 +391,7 @@ struct predictedCollision
 	float timeToCollision; //in seconds
 	bool collisionDetected;
 	double distance; //distance between current A loc and A at time of collision loc
+	double angle; //angle between aircraftA.Hdg[0] and collision point (theta)
 	
 	float relativeHeading;
 	double headingB;
