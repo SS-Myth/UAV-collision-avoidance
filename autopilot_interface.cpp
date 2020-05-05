@@ -1977,7 +1977,7 @@ CA_predict_thread()
 			//printf("Done Logging\n");
 
 			//printf("\nPREDICT\n");			//Predict using the logged point
-			collision = CA_Predict(ourAircraft, otherAircraft, ourAircraft.Hdg[0]);
+			collision = CA_Predict(ourAircraft, otherAircraft);
 			//collision.collisionDetected == true;
 			
 			printf("Collision predicted? %d\n", collision.collisionDetected);
@@ -2083,8 +2083,8 @@ CA_Predict(aircraftInfo & aircraftA, aircraftInfo & aircraftB)
 	//-----------------------------------------------------------------------------
 	
 	//convert aircraft heading to degrees
-	aircraftA.Hdg[0] = aircraftA.Hdg[0] * 180 / 3.1415;
-	aircraftA.Hdg[1] = aircraftA.Hdg[1] * 180 / 3.1415;
+	current_HdgA = current_HdgA * 180 / 3.1415;
+	last_HdgA = last_HdgA * 180 / 3.1415;
 	aircraftB.Hdg[0] = aircraftB.Hdg[0] * 180 / 3.1415;
 	aircraftB.Hdg[1] = aircraftB.Hdg[1] * 180 / 3.1415;
 	
@@ -2093,11 +2093,11 @@ CA_Predict(aircraftInfo & aircraftA, aircraftInfo & aircraftB)
    	aircraftB.Hdg[0] = atan2(aircraftB.velocityY[0], aircraftB.velocityX[0]) * 180.0/3.1415;
    	aircraftB.Hdg[1] = atan2(aircraftB.velocityY[1], aircraftB.velocityX[1]) * 180.0/3.1415;*/
 
-	if (aircraftA.Hdg[0] > aircraftA.Hdg[1])
-		accDirA = aircraftA.Hdg[0] + 90.0;
-	if (aircraftA.Hdg[0] < aircraftA.Hdg[1]) 					
-		accDirA = aircraftA.Hdg[0] - 90.0;
-	if ( fabs(aircraftA.Hdg[0] - aircraftA.Hdg[1]) > 180)  
+	if (current_HdgA > last_HdgA)
+		accDirA = current_HdgA + 90.0;
+	if (current_HdgA < last_HdgA) 					
+		accDirA = current_HdgA - 90.0;
+	if ( fabs(current_HdgA - last_HdgA) > 180)  
 		accDirA = accDirA + 180.0;
 	if (aircraftB.Hdg[0] > aircraftB.Hdg[1]) 					
 		accDirB = aircraftB.Hdg[0] + 90.0;
@@ -2136,8 +2136,8 @@ CA_Predict(aircraftInfo & aircraftA, aircraftInfo & aircraftB)
 	//printf("accNMagA: %f\n", accNMagA);
 	//printf("accNMagB: %f\n", accNMagB);
 	//Unit vector of acceleration tangent to the direction of motion
-	accTUnitA[0] = cos(aircraftA.Hdg[0] * TO_RADIANS);
-	accTUnitA[1] = sin(aircraftA.Hdg[0] * TO_RADIANS);
+	accTUnitA[0] = cos(current_HdgA * TO_RADIANS);
+	accTUnitA[1] = sin(current_HdgA * TO_RADIANS);
 	accTUnitB[0] = cos(aircraftB.Hdg[0] * TO_RADIANS);
 	accTUnitB[1] = sin(aircraftB.Hdg[0] * TO_RADIANS);
 
@@ -2276,7 +2276,7 @@ CA_Predict(aircraftInfo & aircraftA, aircraftInfo & aircraftB)
 			collisionPoint.timeToCollision = t;
 			collisionPoint.distance = collisionDist;
 			collisionPoint.angle = 90 - acos(collisionDist / (2*RmagA)); //angle between current A heading and collision point (theta)
-			if (aircraftA.Hdg[0] < aircraftA.Hdg[1])
+			if (current_HdgA < last_HdgA) //error when crossing northern line (0 degrees = 360 degrees)
 				collisionPoint.angle = -1 * collisionPoint.angle; //if plane turning left, theta is negative
 			collisionPoint.relativeHeading = rH;
 			collisionPoint.headingB = futureHdgB; //may change
@@ -2337,9 +2337,12 @@ considerStrategy(predictedCollision collisionPoint, aircraftInfo & aircraftA, ai
 	double distBIter;
 	
 	//needs to be adjusted to test points along predicted curve instead of straight line, depending on movement of each aircraft
+	//run prediction algorithm on new avoid point
+	//newCollision = Autopilot_Interface::CA_Predict(aircraftA, aircraftB, headingA, aircraftA.Hdg[0]);
+	
 	//iteratively determine if A and B intersect paths at the same time(creates new collision) at 1 sec intervals
 	for(float i = time, i > 0, i = i - 1.0f)
-	{
+	{	
 		//predicted location of A at i seconds in the future
 		distAIter = i * sqrt(pow(aircraftA.velocityX[0], 2) + pow(aircraftA.velocityY[0], 2));
 		futureLatA = asin(sin(aircraftA.lat[0]) * cos(distAIter / RADIUS_EARTH) +
