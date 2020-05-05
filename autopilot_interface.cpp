@@ -2389,6 +2389,10 @@ CA_Avoid(aircraftInfo & aircraftA, aircraftInfo & aircraftB, predictedCollision 
 	double addHdg;
 	double avdDist;
 	double avdHdg; //target heading of aircraft A to avoid collision
+	double futureLatA;
+	double futureLonA;
+	
+	predictedCollision newCollision = collision;
 	
 	//double collisionDist = sqrt(pow((collision.locationA.x - aircraftA.lat[0]), 2) + pow((collision.locationA.y - aircraftA.lon[0]), 2));
 	double avdAlt;
@@ -2400,13 +2404,11 @@ CA_Avoid(aircraftInfo & aircraftA, aircraftInfo & aircraftB, predictedCollision 
      	//double relativeHdg = relHdg(aircraftA.Hdg[0], aircraftB.Hdg[0]);
 	//addToFile(convertToString(relativeHdg), "Relative Heading");
 	
-	//consider method of calculating cost of each strategy for improved path optimization
-	
 	//Sidestep
 	right = true;
 	count = 6;
 	avdAng = 0;
-	while(collision.collisionDetected && count > 0)
+	while(newCollision.collisionDetected && count > 0)
 	{
 		
 		if(right)
@@ -2416,10 +2418,8 @@ CA_Avoid(aircraftInfo & aircraftA, aircraftInfo & aircraftB, predictedCollision 
 		}
 		else
 			avdHdg = aircraftA.Hdg[0] + (collision.angle - avdAng) / 15.0;
-
-		//avdDist = sqrt(pow(collisionDist, 2) + pow(avdLength, 2));
 		
-		collision = CA_Predict(aircraftA, aircraftB, avdHdg, aircraftA.Hdg[0]);
+		newCollision = CA_Predict(aircraftA, aircraftB, avdHdg, aircraftA.Hdg[0]);
 		
 		//while collision is detected loop will continue
 		//else loop will end and further strategies ignored
@@ -2435,7 +2435,7 @@ CA_Avoid(aircraftInfo & aircraftA, aircraftInfo & aircraftB, predictedCollision 
 	right = true;
 	count = 6;
 	avdLength = 0;
-	while(collision.collisionDetected && count > 0)
+	while(newCollision.collisionDetected && count > 0)
 	{
 		if(right)
 		{
@@ -2455,7 +2455,7 @@ CA_Avoid(aircraftInfo & aircraftA, aircraftInfo & aircraftB, predictedCollision 
 	//Speed
 	right = true;
 	count = 6;
-	while(collision.collision.collisionDetected && count > 0)
+	while(newCollision.collisionDetected && count > 0)
 	{
 		collisionDist = sqrt(pow((collision.location.x - aircraftA.lat[0]), 2) + pow((collision.location.y - aircraftA.lon[0]), 2));
 		
@@ -2520,15 +2520,19 @@ CA_Avoid(aircraftInfo & aircraftA, aircraftInfo & aircraftB, predictedCollision 
 	printf("avoidVex x,y: %f, %f\n", avoidVec[0], avoidVec[1]);
     	//generate the waypoint
     	mavlink_mission_item_t avoidWaypoint;
-    	//avoidWaypoint.x = avoidVec[0];
-    	//avoidWaypoint.y = avoidVec[1];
-    	//avoidWaypoint.z = currentMission[endVal].z;
-
-	printf("avoidVex x,y: %f, %f\n", avoidVec[0], avoidVec[1]);
-	avoidWaypoint = NewAvoidWaypoint(avoidVec[1], avoidVec[0], aircraftA);
+	futureLatA = asin(sin(aircraftA.lat[0]) * cos(collision.distance / RADIUS_EARTH) +
+				 cos(aircraftA.lat[0]) * sin(collision.distance / RADIUS_EARTH) * cos(avdHdg * TO_RADIANS));
+	futureLonA = aircraftA.lon[0] + atan2(sin(avdHdg * TO_RADIANS) * sin(collision.distance / RADIUS_EARTH) * cos(aircraftA.lat[0]), 
+						     cos(collision.distance / RADIUS_EARTH) * sin(aircraftA.lat[0]) * sin(futureLatA));
+	
+	avoidWaypoint.x = futureLatA;
+	avoidWaypoint.y = futureLonA;
+	avoidWaypoint.z = 
+	
+	//printf("avoidVex x,y: %f, %f\n", avoidVec[0], avoidVec[1]);
 	printf("avoidWaypoint.x after: %f\n", avoidWaypoint.x);
 	printf("avoidWaypoint.x %f , y: %f\n", avoidWaypoint.x, avoidWaypoint.y);
-	printf("avoidVex x,y: %f, %f\n", avoidVec[0], avoidVec[1]);
+	//printf("avoidVex x,y: %f, %f\n", avoidVec[0], avoidVec[1]);
 
     	//log its lat and lon
     	addToFile(convertToString(avoidWaypoint.x), "avoidWP lat (x)");
