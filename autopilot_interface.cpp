@@ -2391,6 +2391,7 @@ CA_Avoid(aircraftInfo & aircraftA, aircraftInfo & aircraftB, predictedCollision 
 	double avdHdg; //target heading of aircraft A to avoid collision
 	double futureLatA;
 	double futureLonA;
+	double futureAltA = aircraftA.alt[0];
 	
 	predictedCollision newCollision = collision;
 	
@@ -2527,7 +2528,7 @@ CA_Avoid(aircraftInfo & aircraftA, aircraftInfo & aircraftB, predictedCollision 
 	
 	avoidWaypoint.x = futureLatA;
 	avoidWaypoint.y = futureLonA;
-	avoidWaypoint.z = 
+	avoidWaypoint.z = futureAltA;
 	
 	//printf("avoidVex x,y: %f, %f\n", avoidVec[0], avoidVec[1]);
 	printf("avoidWaypoint.x after: %f\n", avoidWaypoint.x);
